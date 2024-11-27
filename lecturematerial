@@ -1,0 +1,4018 @@
+## ---- 01-introduction, echo = FALSE, cache = FALSE-----------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE )
+
+## ----echo = FALSE, out.width = "75%"-------------------------------------
+knitr::include_graphics("diagrams/data-science.png")
+
+## ----echo = FALSE, out.width = "75%"-------------------------------------
+knitr::include_graphics("diagrams/rstudio-console.png")
+
+## ---- eval = FALSE-------------------------------------------------------
+## install.packages("tidyverse")
+
+## ------------------------------------------------------------------------
+library(tidyverse)
+
+## ---- eval = FALSE-------------------------------------------------------
+## install.packages(c("nycflights13", "gapminder"))
+
+## ---- eval = TRUE--------------------------------------------------------
+1 + 2
+#> [1] 3
+
+## ---- 01-introduction, echo = FALSE, cache = FALSE-----------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE )
+
+## ------------------------------------------------------------------------
+1 / 200 * 30
+(59 + 73 + 2) / 3
+sin(pi / 2)
+
+## ------------------------------------------------------------------------
+x <- 3 * 4
+
+## ----eval = FALSE--------------------------------------------------------
+## object_name <- value
+
+## ---- eval = FALSE-------------------------------------------------------
+## i_use_snake_case
+## otherPeopleUseCamelCase
+## some.people.use.periods
+## And_aFew.People_RENOUNCEconvention
+
+## ------------------------------------------------------------------------
+x
+
+## ------------------------------------------------------------------------
+this_is_a_really_long_name <- 2.5
+
+## ------------------------------------------------------------------------
+r_rocks <- 2 ^ 3
+
+## ---- eval = FALSE-------------------------------------------------------
+## r_rock
+## #> Error: object 'r_rock' not found
+## R_rocks
+## #> Error: object 'R_rocks' not found
+
+## ----eval = FALSE--------------------------------------------------------
+## function_name(arg1 = val1, arg2 = val2, ...)
+
+## ------------------------------------------------------------------------
+seq(1, 10)
+
+## ------------------------------------------------------------------------
+x <- "hello world"
+
+## ------------------------------------------------------------------------
+y <- seq(1, 10, length.out = 5)
+y
+
+## ------------------------------------------------------------------------
+(y <- seq(1, 10, length.out = 5))
+
+## ---- echo = FALSE, out.width = NULL-------------------------------------
+knitr::include_graphics("screenshots/rstudio-env.png")
+
+## ---- 01-introduction, echo = FALSE, cache = FALSE-----------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE )
+
+## ----echo = FALSE, out.width = "75%"-------------------------------------
+knitr::include_graphics("diagrams/rstudio-editor.png")
+
+## ---- eval = FALSE-------------------------------------------------------
+## data(mtcars)
+## names(mtcars)█
+## hist(mtcars$mpg)
+
+## ----echo = FALSE, out.width = NULL--------------------------------------
+knitr::include_graphics("screenshots/rstudio-diagnostic.png")
+
+## ----echo = FALSE, out.width = NULL--------------------------------------
+knitr::include_graphics("screenshots/rstudio-diagnostic-tip.png")
+
+## ----echo = FALSE, out.width = NULL--------------------------------------
+knitr::include_graphics("screenshots/rstudio-diagnostic-warn.png")
+
+## ---- echo = FALSE, cache = FALSE----------------------------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE )
+
+## ----packages, cache = FALSE, message = FALSE, echo = FALSE--------------
+library(tidyverse)
+library(knitr)
+library(stringr)
+library(broom)
+library(datasauRus)
+library(gganimate)
+
+## ----datasaurus-sum-stats, echo = FALSE----------------------------------
+datasaurus_dozen %>%
+  group_by(dataset) %>%
+  summarize(n = n(),
+            x_mean = mean(x),
+            y_mean = mean(y),
+            x_sd = sd(x),
+            y_sd = sd(y),
+            r2 = cor(x, y)) %>%
+  mutate(id = row_number()) %>%
+  select(id, everything()) %>%
+  select(-dataset) %>%
+  kable(col.names = c("ID", "$N$", "$\\bar{X}$", "$\\bar{Y}$",
+                      "$\\sigma_{X}$", "$\\sigma_{Y}$", "$R$"))
+
+## ----datasaurus-lm, echo = FALSE, results = "asis"-----------------------
+# estimate linear model
+datasaurus_model <- datasaurus_dozen %>%
+  group_by(dataset) %>%
+  nest() %>%
+  mutate(model = map(data, ~ lm(y ~ x, data = .x)),
+         results = map(model, tidy)) %>%
+  unnest(results)
+
+# plot model estimates
+datasaurus_model %>%
+  ggplot(aes(fct_rev(term), estimate, color = dataset)) +
+  geom_pointrange(aes(ymin = estimate - 1.96 * std.error,
+                      ymax = estimate + 1.96 * std.error),
+                  position = position_dodge(width = 1)) +
+  labs(title = "Linear regression models",
+       subtitle = "With 95% confidence intervals",
+       x = NULL,
+       y = "Estimated parameter") +
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+## ----datasaurus-graph, echo = FALSE, warning = FALSE---------------------
+ggplot(datasaurus_dozen, aes(x = x, y = y))+
+  geom_point() +
+  theme_minimal() +
+  transition_states(dataset, 3, 1) + 
+  ease_aes('cubic-in-out')
+
+## ----datasaurus-graph-static, echo = FALSE, fig.height = 8, fig.width = 8----
+ggplot(datasaurus_dozen, aes(x = x, y = y))+
+  facet_wrap(~ dataset) +
+  geom_point() +
+  theme_minimal()
+
+## ----echo = FALSE, out.width = "75%"-------------------------------------
+knitr::include_graphics("diagrams/data-science-explore.png")
+
+## ---- echo = FALSE, cache = FALSE----------------------------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE )
+
+## ----setup---------------------------------------------------------------
+library(tidyverse)
+
+## ----eval = FALSE--------------------------------------------------------
+## install.packages("tidyverse")
+## library(tidyverse)
+
+## ------------------------------------------------------------------------
+mpg
+
+## ------------------------------------------------------------------------
+ggplot(data = mpg) + 
+  geom_point( aes(x = displ, y = hwy))
+
+## ----eval = FALSE--------------------------------------------------------
+## ggplot(data = <DATA>) +
+##   <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))
+
+## ----eval = FALSE--------------------------------------------------------
+## ggplot(<DATA>) +
+##   <GEOM_FUNCTION>(aes(<MAPPINGS>))
+
+## ------------------------------------------------------------------------
+ggplot(mpg) + 
+  geom_point(aes(x = displ, y = hwy))
+
+## ---- echo = FALSE-------------------------------------------------------
+ggplot(data = mpg,  aes(x = displ, y = hwy)) +
+  geom_point() + 
+  geom_point(data = dplyr::filter(mpg, displ > 5, hwy > 20), colour = "red", size = 2.2)
+
+## ------------------------------------------------------------------------
+ggplot(data = mpg) + 
+  geom_point( aes(x = displ, y = hwy, color = class))
+
+## ------------------------------------------------------------------------
+ggplot(data = mpg) + 
+  geom_point( aes(x = displ, y = hwy, size = class))
+
+## ----fig.align = 'default', warning = FALSE, fig.cap =""-----------------
+ggplot(data = mpg) + 
+  geom_point( aes(x = displ, y = hwy, shape = class))
+
+## ------------------------------------------------------------------------
+ggplot(data = mpg) + 
+  geom_point( aes(x = displ, y = hwy), color = "blue")
+
+## ----shapes, echo = FALSE, out.width = "75%", fig.asp = 1/3, fig.cap="R has 25 built in shapes that are identified by numbers. There are some seeming duplicates: for example, 0, 15, and 22 are all squares. The difference comes from the interaction of the `colour` and `fill` aesthetics. The hollow shapes (0--14) have a border determined by `colour`; the solid shapes (15--18) are filled with `colour`; the filled shapes (21--24) have a border of `colour` and are filled with `fill`.", warning = FALSE----
+shapes <- tibble(
+  shape = c(0, 1, 2, 5, 3, 4, 6:19, 22, 21, 24, 23, 20),
+  x = (0:24 %/% 5) / 2,
+  y = (-(0:24 %% 5)) / 4
+)
+ggplot(shapes, aes(x, y)) + 
+  geom_point(aes(shape = shape), size = 5, fill = "red") +
+  geom_text(aes(label = shape), hjust = 0, nudge_x = 0.15) +
+  scale_shape_identity() +
+  expand_limits(x = 4.1) +
+  scale_x_continuous(NULL, breaks = NULL) + 
+  scale_y_continuous(NULL, breaks = NULL, limits = c(-1.2, 0.2)) + 
+  theme_minimal() +
+  theme(aspect.ratio = 1/2.75)
+
+## ------------------------------------------------------------------------
+ggplot(data = mpg) + 
+  geom_point( aes(x = displ, y = hwy)) + 
+  facet_wrap(~ class, nrow = 2)
+
+## ------------------------------------------------------------------------
+ggplot(data = mpg) + 
+  geom_point( aes(x = displ, y = hwy)) + 
+  facet_grid(drv ~ cyl)
+
+## ----echo = FALSE, out.width = "50%", fig.align="default", message = FALSE----
+ggplot(data = mpg) + 
+  geom_point( aes(x = displ, y = hwy))
+
+ggplot(data = mpg) + 
+  geom_smooth( aes(x = displ, y = hwy))
+
+## ----eval = FALSE--------------------------------------------------------
+## # left
+## ggplot(data = mpg) +
+##   geom_point( aes(x = displ, y = hwy))
+## 
+## # right
+## ggplot(data = mpg) +
+##   geom_smooth( aes(x = displ, y = hwy))
+
+## ----message = FALSE-----------------------------------------------------
+ggplot(data = mpg) + 
+  geom_smooth( aes(x = displ, y = hwy, linetype = drv))
+
+## ----echo = FALSE, message = FALSE---------------------------------------
+ggplot(data = mpg,  aes(x = displ, y = hwy, color = drv)) + 
+  geom_point() +
+  geom_smooth( aes(linetype = drv))
+
+## ---- fig.width = 3, fig.align = 'default', out.width = "33%", message = FALSE----
+ggplot(data = mpg) +
+  geom_smooth( aes(x = displ, y = hwy))
+              
+ggplot(data = mpg) +
+  geom_smooth( aes(x = displ, y = hwy, group = drv))
+    
+ggplot(data = mpg) +
+  geom_smooth(
+     aes(x = displ, y = hwy, color = drv),
+    show.legend = FALSE
+  )
+
+## ---- message = FALSE----------------------------------------------------
+ggplot(data = mpg) + 
+  geom_point( aes(x = displ, y = hwy)) +
+  geom_smooth( aes(x = displ, y = hwy))
+
+## ---- eval = FALSE-------------------------------------------------------
+## ggplot(data = mpg,  aes(x = displ, y = hwy)) +
+##   geom_point() +
+##   geom_smooth()
+
+## ---- message = FALSE----------------------------------------------------
+ggplot(data = mpg,  aes(x = displ, y = hwy)) + 
+  geom_point( aes(color = class)) + 
+  geom_smooth()
+
+## ---- message = FALSE----------------------------------------------------
+ggplot(data = mpg,  aes(x = displ, y = hwy)) + 
+  geom_point( aes(color = class)) + 
+  geom_smooth(data = filter(mpg, class == "subcompact"), se = FALSE)
+
+## ----message = FALSE, eval = T, echo = T---------------------------------
+library(ggplot2)
+data(diamonds)
+
+## ----fig.width= 5, fig.height= 5, fig.align= "center", echo=FALSE--------
+library(png)
+library(grid)
+dia_img <- readPNG("diamond.png")
+grid.raster(dia_img)
+
+## ----message = FALSE, eval = F, echo = T---------------------------------
+## dim(diamonds)
+## names(diamonds)
+## head(diamonds)
+## str(diamonds)
+## summary(diamonds)
+
+## ------------------------------------------------------------------------
+ggplot(data = diamonds) + 
+  geom_bar( aes(x = cut))
+
+## ---- echo = FALSE, out.width = "100%"-----------------------------------
+knitr::include_graphics("images/visualization-stat-bar.png")
+
+## ------------------------------------------------------------------------
+ggplot(data = diamonds) + 
+  stat_count( aes(x = cut))
+
+## ---- warning = FALSE----------------------------------------------------
+cut <- c("Fair", "Good","Very Good", "Premium", "Ideal")
+freq <- c(1610, 4906, 12082, 13791, 21551)
+demo <- data.frame(cut, freq)
+ggplot(data = demo) +
+  geom_bar( aes(x = cut, y = freq), stat = "identity")
+
+## ------------------------------------------------------------------------
+ggplot(data = diamonds) + 
+  geom_bar( aes(x = cut, y = ..prop.., group = 1))
+
+## ------------------------------------------------------------------------
+ggplot(data = diamonds) + 
+  stat_summary(
+     aes(x = cut, y = depth),
+    fun.ymin = min,
+    fun.ymax = max,
+    fun.y = median
+  )
+
+## ----out.width = "50%", fig.align = "default"----------------------------
+ggplot(data = diamonds) + 
+  geom_bar( aes(x = cut, colour = cut))
+ggplot(data = diamonds) + 
+  geom_bar( aes(x = cut, fill = cut))
+
+## ------------------------------------------------------------------------
+ggplot(data = diamonds) + 
+  geom_bar( aes(x = cut, fill = clarity))
+
+## ----out.width = "50%", fig.align = "default"----------------------------
+ggplot(data = diamonds,  aes(x = cut, fill = clarity)) + 
+  geom_bar(alpha = 1/5, position = "identity")
+ggplot(data = diamonds,  aes(x = cut, colour = clarity)) + 
+  geom_bar(fill = NA, position = "identity")
+
+## ------------------------------------------------------------------------
+ggplot(data = diamonds) + 
+  geom_bar( aes(x = cut, fill = clarity), position = "fill")
+
+## ------------------------------------------------------------------------
+ggplot(data = diamonds) + 
+  geom_bar( aes(x = cut, fill = clarity), position = "dodge")
+
+## ----echo = FALSE--------------------------------------------------------
+ggplot(data = mpg) + 
+  geom_point( aes(x = displ, y = hwy))
+
+## ------------------------------------------------------------------------
+ggplot(data = mpg) + 
+  geom_point( aes(x = displ, y = hwy), position = "jitter")
+
+## ---- 01-introduction, echo = FALSE, cache = FALSE-----------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE )
+
+## ----out.width = "1000px", echo=FALSE------------------------------------
+
+knitr::include_graphics("rstudio.png")
+
+## ----message = FALSE,  eval = FALSE, error=FALSE, echo = TRUE------------
+## install.packages("Amelia")
+## install.packages("tidyverse")
+## install.packages("rgl")
+## install.packages("ggthemes")
+## install.packages("readstata13")
+## install.packages("haven")
+## install.packages("XLConnect")
+
+## ----message = FALSE, warning= FALSE,, error=FALSE, eval = TRUE, echo = TRUE----
+library(tidyverse)
+library(rgl)
+library(ggthemes)
+
+## ---- eval = FALSE-------------------------------------------------------
+## ls()                                      # list the variables in the workspace
+## rm(x)                                     # remove x from the workspace
+## rm(list=ls())                             # remove all the variables from the workspace. Be VERY CAREFUL with this command
+## getwd()                                   # get working directory
+## setwd()                                   # set working directory
+## list.files(pattern = ".docx")             # see all files with a certain pattern (here .docx files)
+
+## ----setup, message = FALSE----------------------------------------------
+library(tidyverse)
+
+## ---- eval = FALSE-------------------------------------------------------
+## typeof() # what is it?
+## length() # how long is it? What about two dimensional objects?
+## attributes() # does it have any metadata?
+## 
+## # Example
+## 
+## x <- "Jibo"
+## typeof(x)
+## 
+## 
+## y <- 1:10
+## typeof(y)
+## length(y)
+## 
+## 
+## z <- c(1L, 2L, 3L)
+## typeof(z)
+
+## ----datatypes, echo = FALSE, out.width = "50%", fig.cap = "The hierarchy of R's vector types"----
+knitr::include_graphics("diagrams/data-structures-overview.png")
+
+## ---- eval = TRUE--------------------------------------------------------
+x <- vector()
+# with a length and type
+vector("character", length = 10)
+character(5) ## character vector of length 5
+numeric(5)
+logical(5)
+
+## ---- eval = TRUE--------------------------------------------------------
+x <- c(1, 2, 3)
+x
+length(x)
+
+## ---- eval = TRUE--------------------------------------------------------
+x1 <- c(1L, 2L, 3L)
+
+## ---- eval = TRUE--------------------------------------------------------
+y <- c(TRUE, TRUE, FALSE, FALSE)
+
+## ---- eval = TRUE--------------------------------------------------------
+z <- c("James", "Ben", "George", "Jibo")
+
+## ---- eval = TRUE--------------------------------------------------------
+typeof(z)
+length(z)
+class(z)
+str(z)
+
+## ---- eval = TRUE--------------------------------------------------------
+z <- c(z, "Annette")
+z
+
+## ---- eval = TRUE--------------------------------------------------------
+series <- 1:10
+seq(10)
+seq(1, 10, by = 0.1)
+
+## ------------------------------------------------------------------------
+typeof(letters)
+typeof(1:10)
+
+## ------------------------------------------------------------------------
+x <- list("a", "b", 1:10)
+length(x)
+
+## ------------------------------------------------------------------------
+1:10 %% 3 == 0
+logical(5)
+c(TRUE, TRUE, FALSE, NA)
+
+## ------------------------------------------------------------------------
+typeof(1)
+typeof(1L)
+
+## ------------------------------------------------------------------------
+# Doubles are approximations but Integers are NOT approximations
+  x <- sqrt(2) ^ 2
+  x
+  x - 2
+  x-2L
+  x - x
+
+## ------------------------------------------------------------------------
+c(-1, 0, 1) / 0
+
+## ------------------------------------------------------------------------
+character(3) ## character vector of length 3
+char <- c("a", "b", "c")
+
+## ------------------------------------------------------------------------
+NA            # logical
+NA_integer_   # integer
+NA_real_      # double
+NA_character_ # character
+
+## ------------------------------------------------------------------------
+x <- sample(20, 100, replace = TRUE)
+y <- x > 10
+sum(y)  # how many are greater than 10?
+mean(y) # what proportion are greater than 10?
+
+## ---- eval = FALSE-------------------------------------------------------
+## if (length(x)) {
+##   # do something
+## }
+
+## ---- eval = FALSE-------------------------------------------------------
+## xx <- c(1.7, "a")
+## xx <- c(TRUE, 2)
+## xx <- c("a", TRUE)
+
+## ---- eval = TRUE--------------------------------------------------------
+x <- 0:6
+x
+as.numeric(x)
+as.logical(x) 
+as.character(x)
+
+## ---- eval = TRUE--------------------------------------------------------
+x <- c("a", "b", "c")
+as.numeric(x)
+as.logical(x)
+# both don't work
+
+## ------------------------------------------------------------------------
+typeof(c(TRUE, 1L))
+typeof(c(1L, 1.5))
+typeof(c(1.5, "a"))
+
+## ------------------------------------------------------------------------
+z<- 1L
+is_scalar_atomic(z)
+length(z)
+
+## ------------------------------------------------------------------------
+sample(10) + 100
+runif(10) > 0.5
+
+## ------------------------------------------------------------------------
+1:10 + 1:2
+
+## ---- warning= TRUE------------------------------------------------------
+1:10 + 1:3
+
+## ---- error = TRUE-------------------------------------------------------
+tibble(x = 1:4, y = 1:2)
+
+tibble(x = 1:4, y = rep(1:2, 2))
+
+tibble(x = 1:4, y = rep(1:2, each = 2))
+
+## ------------------------------------------------------------------------
+c(x = 1, y = 2, z = 4)
+
+## ------------------------------------------------------------------------
+set_names(1:3, c("a", "b", "c"))
+
+## ------------------------------------------------------------------------
+x <- c("one", "two", "three", "four", "five")
+
+## ------------------------------------------------------------------------
+   # Recall  x is the vector c("one", "two", "three", "four", "five")
+x[c(3, 2, 5)]
+
+## ------------------------------------------------------------------------
+x[c(1, 1, 5, 5, 5, 2)]
+
+## ------------------------------------------------------------------------
+x[c(-1, -3, -5)]
+
+## ---- error = TRUE-------------------------------------------------------
+x[c(1, -1)]
+
+## ------------------------------------------------------------------------
+x[0]
+
+## ------------------------------------------------------------------------
+x <- c(10, 3, NA, 5, 8, 1, NA)
+
+# All non-missing values of x
+x[!is.na(x)]
+
+# All even (or missing!) values of x
+x[x %% 2 == 0]
+
+## ------------------------------------------------------------------------
+x <- c(abc = 1, def = 2, xyz = 5)
+x[c("xyz", "def")]
+
+## ---- eval = TRUE--------------------------------------------------------
+x <- list(1, 1L, "a", TRUE, 1+4i) 
+# Unlike atomic vectors, `list()`                                 
+# can contain a mix of objects
+x
+str(x)
+z <- list(list(1, 2), list(3, 4)) 
+# Lists can even contain other lists!
+z
+str(z)
+is.recursive(z)
+
+## ---- eval = TRUE--------------------------------------------------------
+x <- 1:10
+x <- as.list(x)
+length(x)
+
+## ---- eval = TRUE--------------------------------------------------------
+xlist <- list(a = "Jibo", b = 1:10, data = head(iris))
+xlist
+
+## ------------------------------------------------------------------------
+x
+str(x)
+x_named <- list(a = 1, b = 2, c = 3)
+str(x_named)
+
+## ------------------------------------------------------------------------
+x1 <- list(c(1, 2), c(3, 4))
+x2 <- list(list(1, 2), list(3, 4))
+x3 <- list(1, list(2, list(3)))
+
+## ---- echo = FALSE, out.width = "75%"------------------------------------
+knitr::include_graphics("diagrams/lists-structure.png")
+
+## ------------------------------------------------------------------------
+a <- list(a = 1:3, b = "a string", c = pi, d = list(-1, -5))
+
+## ------------------------------------------------------------------------
+str(a[1:2])
+str(a[4])
+
+## ------------------------------------------------------------------------
+str(a[[1]])
+str(a[[4]])
+
+## ------------------------------------------------------------------------
+a$a
+a[["a"]]
+
+## ----lists-subsetting, echo = FALSE, out.width = "75%", fig.cap = "Subsetting a list, visually."----
+knitr::include_graphics("diagrams/lists-subsetting.png")
+
+## ---- echo = FALSE, out.width = "25%"------------------------------------
+knitr::include_graphics("images/pepper.jpg")
+
+## ---- echo = FALSE, out.width = "25%"------------------------------------
+knitr::include_graphics("images/pepper-1.jpg")
+
+## ---- echo = FALSE, out.width = "25%"------------------------------------
+knitr::include_graphics("images/pepper-2.jpg")
+
+## ---- echo = FALSE, out.width = "25%"------------------------------------
+knitr::include_graphics("images/pepper-3.jpg")
+
+## ------------------------------------------------------------------------
+x<-c("one" = 1, "two" = 2)
+attributes(x)
+
+## ------------------------------------------------------------------------
+attributes(x)
+
+## ------------------------------------------------------------------------
+x <- factor(c("ab", "cd", "ab"), levels = c("ab", "cd", "ef"))
+typeof(x)
+attributes(x)
+
+## ------------------------------------------------------------------------
+x <- factor(c("yes", "no", "no", "yes", "yes"))
+x
+typeof(x)
+
+## ------------------------------------------------------------------------
+as.character(x)
+
+## ------------------------------------------------------------------------
+as.factor(x)
+
+## ------------------------------------------------------------------------
+x <- factor(c("yes", "no", "yes"), levels = c("yes", "no"))
+x
+
+## ------------------------------------------------------------------------
+x <- as.Date("1971-01-01")
+typeof(x)
+attributes(x)
+
+## ---- eval = TRUE--------------------------------------------------------
+df <- data.frame(id = letters[1:10], x = 1:10, y = rnorm(10))
+df
+
+## ---- eval = TRUE--------------------------------------------------------
+cbind(df, data.frame(z = 4))
+
+## ---- eval = TRUE--------------------------------------------------------
+1/0
+1/Inf
+
+## ---- eval = TRUE--------------------------------------------------------
+0/0
+
+## ---- eval = TRUE--------------------------------------------------------
+length(1:10)
+nchar("Software Carpentry")
+
+## ---- eval = TRUE--------------------------------------------------------
+x <- 1:3
+names(x) <- c("one", "two", "three")
+x
+
+## ---- eval = TRUE--------------------------------------------------------
+x <- as.list(1:10)
+names(x) <- letters[seq(along = x)]
+x
+
+## ---- eval = TRUE--------------------------------------------------------
+m <- matrix(1:4, nrow = 2)
+dimnames(m) <- list(c("a", "b"), c("c", "d"))
+# first element = rownames
+# second element = colnames
+m
+dimnames(m)
+colnames(m) ## or rownames(m)
+
+## ---- eval = FALSE-------------------------------------------------------
+## is.na()
+## is.nan()
+
+## ---- eval = TRUE--------------------------------------------------------
+x <- c(1,2, NA, 4, 5)
+x
+
+## ---- eval = TRUE--------------------------------------------------------
+is.na(x) # returns logical
+# shows third
+is.nan(x)
+# none are NaN
+
+## ---- eval = TRUE--------------------------------------------------------
+x <- c(1,2, NA, NaN, 4, 5)
+is.na(x)
+# shows 2 TRUE
+is.nan(x)
+# shows 1 TRUE
+
+## ------------------------------------------------------------------------
+tb <- tibble::tibble(x = 1:5, y = 5:1)
+typeof(tb)
+attributes(tb)
+
+## ------------------------------------------------------------------------
+df <- data.frame(x = 1:5, y = 5:1)
+typeof(df)
+attributes(df)
+
+## ---- eval = TRUE--------------------------------------------------------
+m <- matrix(nrow = 2, ncol = 2)
+m
+dim(m)
+
+## ---- eval = TRUE--------------------------------------------------------
+m <- matrix(1:6, nrow = 2, ncol = 3)
+
+## ---- eval = TRUE--------------------------------------------------------
+m <- 1:10
+dim(m) <- c(2, 5)
+
+## ---- eval = TRUE--------------------------------------------------------
+x <- 1:3
+y <- 10:12
+cbind(x, y)
+# or 
+rbind(x, y)
+
+## ---- eval = TRUE, tidy = FALSE------------------------------------------
+mdat <- matrix(c(1,2,3, 11,12,13), nrow = 2, ncol = 3, byrow = TRUE,
+               dimnames = list(c("row1", "row2"),
+                               c("C.1", "C.2", "C.3")))
+mdat
+
+## ---- 01-introduction, echo = FALSE-------------------------------------------------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE )
+
+## ---- echo = FALSE------------------------------------------------------------------------------
+library(tidyverse)
+library(modelr)
+library(broom)
+library(ggplot2)
+library(gganimate)
+library(plotly)
+library(ggvis)
+
+
+## ----packages, cache = FALSE, message = FALSE, echo = FALSE-------------------------------------
+library(tidyverse)
+library(knitr)
+library(stringr)
+library(broom)
+library(datasauRus)
+library(gganimate)
+
+
+## .sidenote, .marginnote {
+
+##   float: right;
+
+##   clear: right;
+
+##   margin-right: -60%;
+
+##   width: 57%;         # best between 50% and 60%
+
+##   margin-top: 0;
+
+##   margin-bottom: 0;
+
+##   font-size: 1.1rem;
+
+##   line-height: 1.3;
+
+##   vertical-align: baseline;
+
+##   position: relative;
+
+##   }
+
+
+## ----setup, message = FALSE, warning = FALSE----------------------------------------------------
+library(tidyverse)
+
+
+## ---- eval = FALSE------------------------------------------------------------------------------
+## typeof() # what is it?
+## length() # how long is it? What about two dimensional objects?
+## attributes() # does it have any metadata?
+## 
+## # Example
+## 
+## x <- "Jibo"
+## typeof(x)
+## 
+## 
+## y <- 1:10
+## typeof(y)
+## length(y)
+## 
+## 
+## z <- c(1L, 2L, 3L)
+## typeof(z)
+
+
+## ---- eval = TRUE,echo=FALSE, warning=FALSE, message=FALSE--------------------------------------
+library(knitr)
+library(kableExtra)
+c1 <- c("",  "1-Dimensional", "2-Dimensional", "n-Dimensional")
+c2 <- c("Same Mode", "Atomic Vector", "Matrix", "")
+c3 <-  c("Different Modes", "List", "Data Frame", "Array")
+data_str_class <- data.frame(c1,c2,c3)
+
+kable(data_str_class, col.names = NULL) %>%
+  kable_styling(full_width = TRUE) %>%
+  column_spec(1, bold = TRUE, border_right = TRUE) %>%
+  column_spec(2, bold = TRUE, width = "30em") %>%
+  column_spec (3,bold = TRUE, width = "30em") 
+
+
+## ----datatypes, echo = FALSE, out.width = "50%", fig.cap = "The hierarchy of R's vector types"----
+knitr::include_graphics("diagrams/data-structures-overview.png")
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+x <- vector()
+# with a length and type
+vector("character", length = 10)
+character(5) ## character vector of length 5
+numeric(5)
+logical(5)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+x <- c(1, 2, 3)
+x
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+x1 <- c(1L, 2L, 3L)
+x1
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+y <- c(TRUE, TRUE, FALSE, FALSE)
+y
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+(z <- c("James", "Ben", "George", "Jibo"))
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+(series <- 1:10)
+seq(1, 5, by = 0.1)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+p <- seq(1,10)
+p
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+p <- seq(10)
+p
+q <- 1:15
+q
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+p <- seq(1, 10, by = 2)
+p
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+p <- seq(1, 10, length.out = 5)
+p
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+p<-rep(3,9)
+p
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+(p <- rep(3,9))
+(q <- rep(c(0,1),5))
+(r <- rep(c(3,6), each = 2))
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+(p <- rnorm(5, mean = 0, sd = 1))
+(q <- sample(c("Heads", "Tails"), 10, replace = TRUE))
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+typeof(z)
+length(z)
+class(z)
+str(z)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+z <- c(z, "Annette")
+z
+
+
+## -----------------------------------------------------------------------------------------------
+typeof(letters)
+typeof(1:10)
+
+
+## -----------------------------------------------------------------------------------------------
+x <- list("a", "b", "c")
+length(x)
+
+
+## -----------------------------------------------------------------------------------------------
+1:10 %% 3 == 0
+logical(5)
+c(TRUE, TRUE, FALSE, NA)
+
+
+## -----------------------------------------------------------------------------------------------
+typeof(1)
+typeof(1L)
+
+
+## -----------------------------------------------------------------------------------------------
+character(3) ## character vector of length 3
+char <- c("a", "b", "c")
+
+
+## -----------------------------------------------------------------------------------------------
+x <- sample(20, 100, replace = TRUE)
+y <- x > 10
+sum(y)  # how many are greater than 10?
+mean(y) # what proportion are greater than 10?
+
+
+## ---- eval = FALSE------------------------------------------------------------------------------
+## xx <- c(1.7, "a")
+## xx <- c(TRUE, 2)
+## xx <- c("a", TRUE)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+x <- 0:6
+x
+as.numeric(x)
+as.logical(x) 
+as.character(x)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+x <- c("a", "b", "c")
+as.numeric(x)
+as.logical(x)
+# both don't work
+
+
+## -----------------------------------------------------------------------------------------------
+typeof(c(TRUE, 1L))
+typeof(c(1L, 1.5))
+typeof(c(1.5, "a"))
+
+
+## -----------------------------------------------------------------------------------------------
+sample(10) + 100
+runif(10) > 0.5
+
+
+## -----------------------------------------------------------------------------------------------
+1:10 + 1:2
+
+
+## ---- warning= TRUE-----------------------------------------------------------------------------
+1:10 + 1:3
+
+
+## -----------------------------------------------------------------------------------------------
+c(x = 1, y = 2, z = 4)
+
+
+## -----------------------------------------------------------------------------------------------
+x <- c("one", "two", "three", "four", "five")
+
+
+## -----------------------------------------------------------------------------------------------
+   # Recall  x is the vector c("one", "two", "three", "four", "five")
+x[c(3, 2, 5)]
+
+
+## -----------------------------------------------------------------------------------------------
+x[c(1, 1, 5, 5, 5, 2)]
+
+
+## -----------------------------------------------------------------------------------------------
+x[c(-1, -3, -5)]
+
+
+## ---- error = TRUE------------------------------------------------------------------------------
+x[c(1, -1)]
+
+
+## -----------------------------------------------------------------------------------------------
+x[0]
+
+
+## -----------------------------------------------------------------------------------------------
+x <- c(10, 3, NA, 5, 8, 1, NA)
+
+# All non-missing values of x
+x[!is.na(x)]
+
+# All even (or missing!) values of x
+x[x %% 2 == 0]
+
+
+## -----------------------------------------------------------------------------------------------
+x <- c(abc = 1, def = 2, xyz = 5)
+x[c("xyz", "def")]
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+x <- list(1, 1L, "a", TRUE, 1+4i) 
+# Unlike atomic vectors, `list()`                                 
+# can contain a mix of objects
+x
+str(x)
+z <- list(list(1, 2), list(3, 4)) 
+# Lists can even contain other lists!
+z
+str(z)
+is.recursive(z)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+x <- 1:10
+x <- as.list(x)
+length(x)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+xlist <- list(a = "Jibo", b = 1:10, data = head(iris))
+xlist
+
+
+## -----------------------------------------------------------------------------------------------
+x
+str(x)
+x_named <- list(a = 1, b = 2, c = 3)
+str(x_named)
+
+
+## -----------------------------------------------------------------------------------------------
+a <- list(a = 1:3, b = "a string", c = pi, d = list(-1, -5))
+
+
+## -----------------------------------------------------------------------------------------------
+str(a[1:2])
+str(a[4])
+
+
+## -----------------------------------------------------------------------------------------------
+str(a[[1]])
+str(a[[4]])
+
+
+## -----------------------------------------------------------------------------------------------
+a$a
+a[["a"]]
+
+
+## ----lists-subsetting, echo = FALSE, out.width = "75%", fig.cap = "Subsetting a list, visually."----
+knitr::include_graphics("diagrams/lists-subsetting.png")
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+df <- data.frame(id = letters[1:10], x = 1:10, y = rnorm(10))
+df
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+cbind(df, data.frame(z = 4))
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+1/0
+1/Inf
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+0/0
+
+
+## ---- eval = FALSE------------------------------------------------------------------------------
+## is.na()
+## is.nan()
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+x <- c(1,2, NA, 4, 5)
+x
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+is.na(x) # returns logical
+# shows third
+is.nan(x)
+# none are NaN
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+x <- c(1,2, NA, NaN, 4, 5)
+is.na(x)
+# shows 2 TRUE
+is.nan(x)
+# shows 1 TRUE
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+m <- matrix(nrow = 2, ncol = 2)
+m
+dim(m)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+m <- matrix(1:6, nrow = 2, ncol = 3)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+m <- 1:10
+dim(m) <- c(2, 5)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+x <- 1:3
+y <- 10:12
+cbind(x, y)
+# or 
+rbind(x, y)
+
+
+## ---- eval = TRUE, tidy = FALSE-----------------------------------------------------------------
+mdat <- matrix(c(1,2,3, 11,12,13), nrow = 2, ncol = 3, byrow = TRUE,
+               dimnames = list(c("row1", "row2"),
+                               c("C.1", "C.2", "C.3")))
+mdat
+
+
+## ----book, fig.margin = TRUE, fig.cap = " ",  out.width = "30%", message=FALSE, echo=FALSE------
+ knitr::include_graphics('cover.png')
+
+## ---- 01-introduction, echo = FALSE-------------------------------------------------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE )
+
+
+## ---- echo = FALSE------------------------------------------------------------------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE, tidy.opts=list(width.cutoff=60),tidy=TRUE )
+
+
+## ---- eval = TRUE, echo = TRUE------------------------------------------------------------------
+library("plm")
+data("Grunfeld")
+
+
+## ---- eval = FALSE, echo = TRUE-----------------------------------------------------------------
+## help(data("Grunfeld"))
+
+
+## ---- echo=FALSE--------------------------------------------------------------------------------
+firm <- Grunfeld
+head(firm)
+
+
+## ---- echo=FALSE--------------------------------------------------------------------------------
+ DiagrammeR :: grViz("digraph flowchart {
+      node [fontname = Helvetica, shape= rectangle]        
+      tab1 [label = '@@1']
+      tab2 [label = '@@2']
+      tab3 [label = '@@3']
+      
+      tab1 -> tab2;
+      tab1 -> tab3;
+      }
+
+      [1]: 'apply(object, margin, function,...)'
+      [2]: 'Object: Matrix, Array'
+      [3]: 'Margin: 1= row, 2= column, c(1,2)= both'
+      ",
+      height = 150)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+apply(firm[,c(2,3,4)], 2, mean) 
+
+
+## ---- echo=FALSE--------------------------------------------------------------------------------
+ DiagrammeR :: grViz("digraph flowchart {
+      node [fontname = Helvetica, shape= rectangle]        
+      tab1 [label = '@@1']
+      tab2 [label = '@@2']
+      tab3 [label = '@@3']
+      
+      tab1 -> tab2;
+      tab1 -> tab3;
+      }
+
+      [1]: 'lapply(object, function,...)'
+      [2]: 'Object: List, Data frame, Vector'
+      [3]: 'Function-specific arguments'
+      ",
+      height = 150)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+is.data.frame(firm)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+lapply(firm, mean)
+
+
+## ---- echo=FALSE--------------------------------------------------------------------------------
+ DiagrammeR :: grViz("digraph flowchart {
+      node [fontname = Helvetica, shape= rectangle]        
+      tab1 [label = '@@1']
+      tab2 [label = '@@2']
+      tab3 [label = '@@3']
+      tab4 [label = '@@4']
+      
+      tab1 -> tab2;
+      tab1 -> tab3;
+      tab1 -> tab4;
+      }
+
+      [1]: 'tapply(x, Index, function, ...)'
+      [2]: 'Object: Vector, Column of a data frame, Element of a list'
+      [3]: 'Index: Factors used to subset x'
+      [4]: 'Function-specific arguments'
+      ",
+      height = 150)
+
+
+## ---- eval = TRUE-------------------------------------------------------------------------------
+tapply(firm$inv, firm$year, mean) 
+
+
+my_mat <- matrix(round(runif(100, min = 0 , max = 10)), nrow = 10)
+
+
+#And I'll add some row names and some column names to it:
+
+rownames(my_mat)<-c("Round1", "Round2", "Round3", "Round4", "Round5", "Round6", "Round7", "Round8", "Round9", "Round10")
+colnames(my_mat)<-c("C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10")
+
+
+my_mat
+
+class(my_mat)
+
+max(my_mat[1,])
+max(my_mat[2,])
+max(my_mat[3,])
+max(my_mat[4,])
+max(my_mat[5,])
+max(my_mat[6,])
+max(my_mat[7,])
+max(my_mat[8,])
+max(my_mat[9,])
+max(my_mat[10,])
+
+
+for (i in 1:10) {
+row<-my_mat[i,]
+max<-max(row)
+print(max)
+}
+
+
+apply(my_mat, 1, max)
+
+
+apply(my_mat, 2, max)
+
+
+my_df<- data.frame( Round1 = round(runif(10, min = 0, max = 10)), 
+                    Round2 = round(runif(10, min = 0, max = 10)), 
+                    Round3 = round(runif(10, min = 0, max = 10)), 
+                    Round4 = round(runif(10, min = 0, max = 10)), 
+                    Round5 = round(runif(10, min = 0, max = 10)), 
+                    Round6 = round(runif(10, min = 0, max = 10)), 
+                    Round7 = round(runif(10, min = 0, max = 10)), 
+                    Round8 = round(runif(10, min = 0, max = 10)), 
+                    Round9 = round(runif(10, min = 0, max = 10)), 
+                    Round10 = round(runif(10, min = 0, max = 10)) )
+
+
+class(my_df)
+
+my_df
+
+is.data.frame(my_df) 
+
+apply(my_df, 1, mean)
+
+my_df$Round <- c("One", "Two", "Three",  "Four",  "Five", "Six", "Seven", "Eight", "Nine", "Ten")
+
+
+is.character(my_df$Round)
+
+
+apply(my_df, 1, mean)
+
+my_df
+apply(my_df[ ,c(1:10)], 1, mean) # we can also use  my_df[c(1:10)] instead of my_df[ ,c(1:10)]
+
+apply(my_df[,-11], 1, mean)
+
+apply(my_df[,-c(2,4,6,11)], 1, mean)
+
+my_df
+
+my_df[6,6] <- NA
+my_df$Round <- NULL
+my_df
+
+ apply(my_df, 1, mean) 
+
+ DiagrammeR :: grViz("digraph flowchart {
+      node [fontname = Helvetica, shape= rectangle]
+      tab1 [label = '@@1']
+      tab2 [label = '@@2']
+      tab3 [label = '@@3']
+
+      tab2 -> tab3;
+      }
+
+      [1]: 'mean(): x<-c(1,3,6,NA,2), mean(x,na.rm=TRUE)'
+      [2]: 'apply(): apply(object,margin,function,...)'
+      [3]: 'Function-specific arguments'
+      ",
+      height = 150)
+
+apply(my_df, 1, mean, na.rm=TRUE)
+
+my_mat
+
+Prop<-function(x){
+  x/max(x)
+}
+
+apply(my_mat, 2, Prop)
+
+library("plm")
+data("Grunfeld")
+
+## help(data("Grunfeld"))
+
+firm <- Grunfeld
+head(firm)
+
+firm %>% slice(which(row_number() %% 20 == 1)) %>% head( n = 40)
+
+firm %>% slice(which(row_number() %% 20 == 0)) %>% head( n = 40)
+
+is.data.frame(firm)
+
+lapply(firm, mean)
+
+firm_list <-  list('Firm1Cap' = subset(firm$capital, firm == 1 ),
+                   'Firm2Cap' = subset(firm$capital, firm == 2 ),
+                   'Firm2Cap' = subset(firm$capital, firm == 3 ),
+                   'Firm2Cap' = subset(firm$capital, firm == 4 ),
+                   'Firm2Cap' = subset(firm$capital, firm == 5 ),
+                   'Firm2Cap' = subset(firm$capital, firm == 6 ),
+                   'Firm2Cap' = subset(firm$capital, firm == 7 ),
+                   'Firm2Cap' = subset(firm$capital, firm == 8 ),
+                   'Firm2Cap' = subset(firm$capital, firm == 9 ),
+                   'Firm2Cap' = subset(firm$capital, firm == 10 ) )
+names(firm_list)
+
+lapply( firm_list, mean )
+
+lapply( firm_list, mean, na.rm = TRUE )
+
+Random<-c("This", "is", "a", "random", "vector")
+Random
+
+lapply(Random, nchar)
+
+nchar(Random)
+
+ DiagrammeR :: grViz("digraph flowchart {
+      node [fontname = Helvetica, shape= rectangle]        
+      tab1 [label = '@@1']
+      tab2 [label = '@@2']
+      tab3 [label = '@@3']
+      
+      tab1 -> tab2;
+      tab1 -> tab3;
+      }
+
+      [1]: 'lapply(object, function,...)'
+      [2]: 'Object: List, Data frame, Vector'
+      [3]: 'Function-specific arguments'
+      ",
+      height = 150)
+
+sapply(firm_list, mean)
+
+names(firm)
+sapply(firm, mean)
+
+sapply(Random, nchar)
+
+sequence<-function(x){
+  seq(nchar(x))
+}
+
+nchar("present")
+
+seq(3)
+
+Random
+sapply(Random, sequence)
+firmID<-1:30
+firmID
+
+Age<-c(32,45,44,34,23,26,37,45,12,23,44,35,57,65,76,43,42,34,36,37,23,21,28,24,29,13,18,32,25,28)
+Age
+
+industry<-c("a","c","c","b","b","b","c","b","c","a","a","a","a","a","b","b","b","b","c","c","c","a","b","c","b","a","a","c","a","c")
+
+mean(Age)
+
+tapply(Age, industry, mean)
+
+ind.df <- data.frame(firmID, industry, Age)
+
+head(ind.df)
+
+tapply(ind.df$Age, ind.df$industry, mean)
+
+ind.list<-list(firmID=firmID, industry=industry, Age=Age)
+ind.list
+
+tapply(ind.list$Age, ind.list$industry, mean)
+## ---- 01-introduction, echo = FALSE----------------------------------------------------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE )
+
+
+## .sidenote, .marginnote {
+
+##   float: right;
+
+##   clear: right;
+
+##   margin-right: -60%;
+
+##   width: 57%;         # best between 50% and 60%
+
+##   margin-top: 0;
+
+##   margin-bottom: 0;
+
+##   font-size: 1.1rem;
+
+##   line-height: 1.3;
+
+##   vertical-align: baseline;
+
+##   position: relative;
+
+##   }
+
+
+## ---- echo = FALSE---------------------------------------------------------------------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE, tidy.opts=list(width.cutoff=60),tidy=TRUE )
+
+
+## ---- echo = FALSE---------------------------------------------------------------------------------
+library(tidyverse)
+library(modelr)
+library(broom)
+library(ggplot2)
+library(gganimate)
+library(plotly)
+library(ggvis)
+library(magrittr)
+library(knitr)
+library(kableExtra)
+
+
+## ---- eval = TRUE, echo=FALSE----------------------------------------------------------------------
+c1 <- c("|", "||", "&", "&&" )
+c2 <- c("Or(vectorized)", "Or", "And(vectorized)", "And")
+dt <- cbind(c1, c2)
+colnames(dt) <- c("Operator", "Description")
+kable(dt) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+1<2
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+5==10
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+5!=10
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+x<-seq(2,20,2)
+x
+x>10
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+x
+x==2|x>=10
+
+
+## ---- eval = TRUE, echo = FALSE, out.width = "50%"-------------------------------------------------
+DiagrammeR::grViz("digraph {
+
+graph [layout = dot, rankdir = LR]
+
+# define the global styles of the nodes. We can override these in box if we wish
+node [shape = rectangle, style = filled, fillcolor = Linen,       color=CornflowerBlue]
+
+if_flowchart [label =  < <font color='red'>  <b> if </b> </font> <br/> if(logical condition) {<br/> commands <br/> }>, shape = square]
+
+# edge definitions with the node IDs
+if_flowchart
+}")
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+number <- 400
+if(number > 0) {
+  print(log(number))
+               } 
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+numbers <- 1:10
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+if(numbers > 0) {
+  print(log(numbers))
+} 
+
+
+## ---- eval = TRUE, echo = FALSE, out.width = "50%"-------------------------------------------------
+DiagrammeR::grViz("digraph {
+
+graph [layout = dot, rankdir = LR]
+
+# define the global styles of the nodes. We can override these in box if we wish
+node [shape = rectangle, style = filled, fillcolor = Linen,       color=CornflowerBlue]
+
+ifelse_flowchart [label =  < <font color='red'>  <b> else (if-else combination) </b> </font> <br/> if(logical condition) {<br/> commands <br/> } else{ <br/> other commands <br/> } >, shape = square]
+
+# edge definitions with the node IDs
+ifelse_flowchart
+}")
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+number <- 0
+if(number > 0) {
+  print(log(number))
+            } else if (number == 0) {
+  print("Log of 0 does not exist")
+            }
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+(x <- c(0:3))
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+x[2] <- log(x[2])
+x[3] <- log(x[3])
+x[4] <- log(x[4])
+x
+
+
+## ---- echo=FALSE-----------------------------------------------------------------------------------
+ DiagrammeR :: grViz("digraph flowchart {
+      node [fontname = Helvetica, shape= rectangle]        
+      tab1 [label = '@@1', fillcolor = Linen, color = black]
+      tab2 [label = '@@2']
+      tab3 [label = '@@3']
+      
+      tab1 -> tab2;
+      tab1 -> tab3;
+      }
+
+      [1]: 'ifelse(test_expression, x, y)'
+      [2]: 'test_expression : logical vector'
+      [3]: ' x, y : vector'
+      ",
+      height = 150)
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+number <- 400
+ifelse(number > 0, log(number), "Log of the number does not exist")
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+numbers
+vector_of_logs <- ifelse (numbers > 0, log(numbers), "Log of the number does not exist")
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+vector_of_logs
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+x <- c(1:5)
+x
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+x
+ifelse(x %% 2 == 0, NA ,x)
+x
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+x <- c("male","female","female", ".")
+x
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+ifelse(x == ".", "male",x)
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+x <- c("male","female","female", ".")
+x <- ifelse(x == ".", "male",x)
+x
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+x <- c("male","female","female", ".")
+x <- ifelse(x == "male"|x == ".", "not female", x)
+x
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+x <- c("male","female","female", ".")
+x
+x <- ifelse(x != "female","not female",x)
+x
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+df <- mtcars
+head(df)
+range(df$mpg)
+df$rating <- ifelse(df$mpg > 30 & df$mpg < 40, "good", "bad")
+head(select(df, mpg, rating))
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+df<-mtcars
+head(df)
+df$better_rating <- ifelse(df$mpg > 30 & df$mpg < 40, "good", 
+                    ifelse(df$mpg < 20, "too bad", "ok") )
+head( select(df, mpg, better_rating), n = 20)
+
+
+## ---- eval = TRUE----------------------------------------------------------------------------------
+df <- mtcars
+for(level in unique(df$cyl)){
+  df[ , paste( level, "cylinder",  sep = "_")] <- ifelse(df$cyl==level,1,0)
+}
+head( df[ , (ncol(df)-2):ncol(df)], n = 5)
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+for(i in 1:5){
+  print(i^2)
+}
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+for(i in c(-3,6,2,5,9)){
+  print(i^2)
+}
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+x <- c(-3,6,2,5,9)
+x
+for (i in x){
+  print(i^2)
+}
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+x
+for (i in x){
+  print(c(i, i^2))
+}
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+storage <- numeric(5)
+
+for(i in 1:5){
+  storage[i] <- i^2
+}
+
+
+storage
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+mean(storage)
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+x
+storage2 <- numeric(5)
+
+for(i in x){
+  storage2[i] <- i^2
+}
+
+storage2
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+x
+storage3 <- numeric(5)
+storage3
+for(i in 1:5){
+  storage3[i] <- (x[i])^2
+}
+storage3
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+library(tidyverse)
+data(mpg)
+names(mpg)
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+mydata <-  mpg[ , c("displ", "cyl", "trans", "cty", "hwy") ]
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+for(i in 2:ncol(mydata)) {                              
+  mygraph <- ggplot(data = mydata, aes(x = displ, y = mydata[[i]]) ) +
+             geom_point()
+  print(mygraph)
+  Sys.sleep(1)
+}
+
+
+## ---- eval=FALSE-----------------------------------------------------------------------------------
+## for (var1 in vec1){
+##   for (var1 in vec1) {
+##     for (var n in vect n){
+##       commands
+##     } #n
+##   } #2
+## } #1
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+for(i in 1:3){
+  for(j in 1:2){
+    print(i+j)
+  }#2
+}#1
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+for(i in 1:5){
+  print(i^2)
+}
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+x <- 1:5
+x
+loopless <- x^2
+loopless
+
+
+## ---- eval = TRUE, echo = FALSE, out.width = "50%"-------------------------------------------------
+DiagrammeR::grViz("digraph {
+
+graph [layout = dot, rankdir = LR]
+
+# define the global styles of the nodes. We can override these in box if we wish
+node [shape = rectangle, style = filled, fillcolor = Linen,       color=CornflowerBlue]
+
+while_flowchart [label =  < <font color='red'>  <b> while loop </b> </font> <br/> while(logical condition) {<br/> commands <br/> }>, shape = square]
+
+# edge definitions with the node IDs
+while_flowchart
+}")
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+x <- 1
+while (x<10) {
+  print(x)
+  x <- x+1
+}
+
+
+## ---- eval=FALSE-----------------------------------------------------------------------------------
+## x <- 1
+## while (x<10) {
+##   print(x)
+##   x <- x+1
+## }
+
+
+## ---- eval = TRUE, echo = FALSE, out.width = "100%", out.height="50%"------------------------------
+DiagrammeR::grViz( "
+digraph flow {
+
+node[shape=square, color= black, penwidth=2, fillcolor= white, style=filled];
+
+1;2;3;4;5;6;7;8;9;10;
+    
+node[shape=rectangle, color= black, penwidth=2, fillcolor= beige, style=filled];   
+       
+X[label= < <b>x </b> >]; 
+       
+# Graph
+1 2 3 4 5 6 7 8 9 10 X;
+
+  
+}
+")
+
+
+## ---- eval = TRUE, echo = FALSE, out.width = "100%", out.height="50%"------------------------------
+DiagrammeR::grViz( "
+digraph flow {
+
+node[shape=square, color= black, penwidth=2, fillcolor= white, style=filled];
+
+1;2;3;4;5;6;7;8;9;
+    
+node[shape=rectangle, color= black, penwidth=2, fillcolor= beige, style=filled];   
+       
+out[label= < <b> Output </b> >];
+       
+# Graph
+ 1 2 3 4 5 6 7 8 9 out;
+  
+}
+")
+
+
+## ---- eval=FALSE-----------------------------------------------------------------------------------
+## x <- 1
+## while (x<10){
+##   print(x)
+##   x <- x+1
+## }
+
+
+## ---- eval=FALSE-----------------------------------------------------------------------------------
+## x <- 1
+## while (x<10){
+##   x <- x+1
+##   print(x)
+## }
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+x <- 1
+while (x<10){
+  x <- x+1
+  print(x)
+}
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+x <- 1
+while (x<10){
+  x <- x+1
+}
+print(x)
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+storage <- c()
+storage
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+x <- 1
+while (x<10) {
+  storage <- c(storage,x)
+  x <- x+1
+}
+
+
+## ---- eval= TRUE, echo=TRUE------------------------------------------------------------------------
+x <- 1
+while (x<10) {
+  storage <- c(storage,x)
+  x <- x+1
+}
+
+
+## ---- eval = TRUE, echo = FALSE, out.width = "80%", out.height="50%"-------------------------------
+DiagrammeR::grViz( "
+digraph flow {
+
+node[shape=square, color= black, penwidth=2, fillcolor= Linen, style=filled];
+
+null[label=NULL]; 1[label= '1']; 12[label= '1, 2']; 123[label= '1,2,3']; 1234[label= '1,2,3,4'];
+    
+node[shape=rectangle, color= black, penwidth=2, fillcolor= beige, style=filled];   
+       
+sto[label= < <b> storage </b> >]; 
+       
+# Graph
+1 12 123 1234 -> sto [style=dotted, color = blue];
+
+}
+")
+
+
+## ---- eval = TRUE, echo = FALSE, out.width = "80%", out.height="50%"-------------------------------
+DiagrammeR::grViz( "
+digraph flow {
+
+node[shape=square, color= black, penwidth=2, fillcolor= white, style=filled];
+
+1;2;3;4;
+    
+node[shape=rectangle, color= black, penwidth=2, fillcolor= beige, style=filled];   
+       
+x[label= < <b> x </b> >];
+       
+# Graph
+ 1 2 3 4 ->  x [style=dotted, color = blue];
+  
+}
+")
+
+
+## ---- eval = FALSE, echo = TRUE--------------------------------------------------------------------
+## storage <- c(storage,x)
+
+
+## ---- eval=TRUE------------------------------------------------------------------------------------
+i <- 1
+while (i<=2) {
+  j <- 1
+  while (j<=2) {
+    print(c(i,j))
+    j <- j+1
+  }
+  i <- i+1
+}
+
+
+## ---- eval=TRUE,echo=FALSE-------------------------------------------------------------------------
+i <- c(1,1,2,2)
+j <- c(1,2,1,2)
+table <- cbind(i, j)
+knitr::kable(table)
+
+
+## ---- eval=FALSE-----------------------------------------------------------------------------------
+## x <- 1
+## while (x<2){
+##   print(x)
+## }
+
+## ------------------------------------------------------------------------
+df <- tibble::tibble(
+  a = rnorm(10),
+  b = rnorm(10),
+  c = rnorm(10),
+  d = rnorm(10)
+)
+
+df$a <- (df$a - min(df$a, na.rm = TRUE)) / 
+  (max(df$a, na.rm = TRUE) - min(df$a, na.rm = TRUE))
+df$b <- (df$b - min(df$b, na.rm = TRUE)) / 
+  (max(df$b, na.rm = TRUE) - min(df$a, na.rm = TRUE))
+df$c <- (df$c - min(df$c, na.rm = TRUE)) / 
+  (max(df$c, na.rm = TRUE) - min(df$c, na.rm = TRUE))
+df$d <- (df$d - min(df$d, na.rm = TRUE)) / 
+  (max(df$d, na.rm = TRUE) - min(df$d, na.rm = TRUE))
+
+## ---- eval = FALSE-------------------------------------------------------
+## (df$a - min(df$a, na.rm = TRUE)) /
+##   (max(df$a, na.rm = TRUE) - min(df$a, na.rm = TRUE))
+
+## ------------------------------------------------------------------------
+x <- df$a
+(x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+
+## ------------------------------------------------------------------------
+rng <- range(x, na.rm = TRUE)
+(x - rng[1]) / (rng[2] - rng[1])
+
+## ------------------------------------------------------------------------
+rescale01 <- function(x) {
+  rng <- range(x, na.rm = TRUE)
+  (x - rng[1]) / (rng[2] - rng[1])
+}
+rescale01(c(0, 5, 10))
+
+## ------------------------------------------------------------------------
+rescale01(c(-10, 0, 10))
+rescale01(c(1, 2, 3, NA, 5))
+
+## ------------------------------------------------------------------------
+df$a <- rescale01(df$a)
+df$b <- rescale01(df$b)
+df$c <- rescale01(df$c)
+df$d <- rescale01(df$d)
+
+## ------------------------------------------------------------------------
+x <- c(1:10, Inf)
+rescale01(x)
+
+## ------------------------------------------------------------------------
+rescale01 <- function(x) {
+  rng <- range(x, na.rm = TRUE, finite = TRUE)
+  (x - rng[1]) / (rng[2] - rng[1])
+}
+rescale01(x)
+
+## ---- eval = FALSE-------------------------------------------------------
+## # Too short
+## f()
+## 
+## # Not a verb, or descriptive
+## my_awesome_function()
+## 
+## # Long, but clear
+## impute_missing()
+## collapse_years()
+
+## ---- eval = FALSE-------------------------------------------------------
+## # Never do this!
+## col_mins <- function(x, y) {}
+## rowMaxes <- function(y, x) {}
+
+## ---- eval = FALSE-------------------------------------------------------
+## # Good
+## input_select()
+## input_checkbox()
+## input_text()
+## 
+## # Not so good
+## select_input()
+## checkbox_input()
+## text_input()
+
+## ---- eval = FALSE-------------------------------------------------------
+## # Don't do this!
+## T <- FALSE
+## c <- 10
+## mean <- function(x) sum(x)
+
+## ---- eval = FALSE-------------------------------------------------------
+## # Load data --------------------------------------
+## 
+## # Plot data --------------------------------------
+
+## ---- echo = FALSE, out.width = NULL-------------------------------------
+knitr::include_graphics("screenshots/rstudio-nav.png")
+
+## ---- eval = FALSE-------------------------------------------------------
+## if (condition) {
+##   # code executed when condition is TRUE
+## } else {
+##   # code executed when condition is FALSE
+## }
+
+## ------------------------------------------------------------------------
+has_name <- function(x) {
+  nms <- names(x)
+  if (is.null(nms)) {
+    rep(FALSE, length(x))
+  } else {
+    !is.na(nms) & nms != ""
+  }
+}
+
+## ---- error = TRUE-------------------------------------------------------
+if (c(TRUE, FALSE)) {}
+
+if (NA) {}
+
+## ------------------------------------------------------------------------
+identical(0L, 0)
+
+## ------------------------------------------------------------------------
+x <- sqrt(2) ^ 2
+x
+x == 2
+x - 2
+
+## ---- eval = FALSE-------------------------------------------------------
+## if (this) {
+##   # do that
+## } else if (that) {
+##   # do something else
+## } else {
+##   #
+## }
+
+## ---- eval = FALSE-------------------------------------------------------
+## # Good
+## if (y < 0 && debug) {
+##   message("Y is negative")
+## }
+## 
+## if (y == 0) {
+##   log(x)
+## } else {
+##   y ^ x
+## }
+## 
+## # Bad
+## if (y < 0 && debug)
+## message("Y is negative")
+## 
+## if (y == 0) {
+##   log(x)
+## }
+## else {
+##   y ^ x
+## }
+
+## ------------------------------------------------------------------------
+y <- 10
+x <- if (y < 20) "Too low" else "Too high"
+
+## ------------------------------------------------------------------------
+if (y < 20) {
+  x <- "Too low" 
+} else {
+  x <- "Too high"
+}
+
+## ------------------------------------------------------------------------
+# Compute confidence interval around mean using normal approximation
+mean_ci <- function(x, conf = 0.95) {
+  se <- sd(x) / sqrt(length(x))
+  alpha <- 1 - conf
+  mean(x) + se * qnorm(c(alpha / 2, 1 - alpha / 2))
+}
+
+x <- runif(100)
+mean_ci(x)
+mean_ci(x, conf = 0.99)
+
+## ---- eval = FALSE-------------------------------------------------------
+## # Good
+## mean(1:10, na.rm = TRUE)
+## 
+## # Bad
+## mean(x = 1:10, , FALSE)
+## mean(, TRUE, x = c(1:10, NA))
+
+## ---- eval = FALSE-------------------------------------------------------
+## # Good
+## average <- mean(feet / 12 + inches, na.rm = TRUE)
+## 
+## # Bad
+## average<-mean(feet/12+inches,na.rm=TRUE)
+
+## ------------------------------------------------------------------------
+wt_mean <- function(x, w) {
+  sum(x * w) / sum(w)
+}
+wt_var <- function(x, w) {
+  mu <- wt_mean(x, w)
+  sum(w * (x - mu) ^ 2) / sum(w)
+}
+wt_sd <- function(x, w) {
+  sqrt(wt_var(x, w))
+}
+
+## ------------------------------------------------------------------------
+wt_mean(1:6, 1:3)
+
+## ------------------------------------------------------------------------
+wt_mean <- function(x, w) {
+  if (length(x) != length(w)) {
+    stop("`x` and `w` must be the same length", call. = FALSE)
+  }
+  sum(w * x) / sum(w)
+}
+
+## ------------------------------------------------------------------------
+sum(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+stringr::str_c("a", "b", "c", "d", "e", "f")
+
+## ------------------------------------------------------------------------
+commas <- function(...) stringr::str_c(..., collapse = ", ")
+commas(letters[1:10])
+
+rule <- function(..., pad = "-") {
+  title <- paste0(...)
+  width <- getOption("width") - nchar(title) - 5
+  cat(title, " ", stringr::str_dup(pad, width), "\n", sep = "")
+}
+rule("Important output")
+
+## ------------------------------------------------------------------------
+x <- c(1, 2)
+sum(x, na.mr = TRUE)
+
+## ------------------------------------------------------------------------
+f <- function(x) {
+  x + y
+} 
+
+## ------------------------------------------------------------------------
+y <- 100
+f(10)
+
+y <- 1000
+f(10)
+
+## ----pythagorean---------------------------------------------------------
+pythagorean <- function(a, b){
+  hypotenuse <- sqrt(a^2 + b^2)
+  return(hypotenuse)
+}
+
+## ------------------------------------------------------------------------
+pythagorean(a = 3, b = 4)
+
+## ---- error = TRUE-------------------------------------------------------
+pythagorean(a = 3, b = 4)
+hypotenuse
+
+## ----message = FALSE,  error=FALSE, echo = FALSE-------------------------
+knitr::opts_chunk$set(cache = TRUE)
+width  <- 6
+height <- 4
+align  <- "center"
+
+## ----setup, message = FALSE----------------------------------------------
+library(tidyverse)
+
+## ---- message = TRUE-----------------------------------------------------
+heights <- read_csv("data/heights.csv")
+
+## ------------------------------------------------------------------------
+read_csv("a,b,c
+1,2,3
+4,5,6")
+
+## ------------------------------------------------------------------------
+read_csv("The first line of metadata
+  The second line of metadata
+  x,y,z
+  1,2,3", skip = 2)
+
+read_csv("# A comment I want to skip
+  x,y,z
+  1,2,3", comment = "#")
+
+## ------------------------------------------------------------------------
+read_csv("1,2,3\n4,5,6", col_names = FALSE)
+
+## ------------------------------------------------------------------------
+read_csv("1,2,3\n4,5,6", col_names = c("x", "y", "z"))
+
+## ------------------------------------------------------------------------
+read_csv("a,b,c\n1,2,.", na = ".")
+
+## ----fig.width= width, fig.height= height, fig.align= align,message = FALSE, eval = T, echo = T, error=F----
+auto<-read.table(file = "auto.csv", header = TRUE, sep = "," , stringsAsFactors = TRUE)
+
+## ----fig.width= width, fig.height= height, fig.align= align,message = FALSE, eval = T, echo = T, error=F----
+str(auto)
+
+## ----fig.width= width, fig.height= height, fig.align= align,message = FALSE, eval = T, echo = T, error=F----
+auto_noheader<-read.table(file = "auto_noheader.csv", header = FALSE, sep = "," , stringsAsFactors = TRUE)
+
+## ----fig.width= width, fig.height= height, fig.align= align,message = FALSE, eval = T, echo = T, error=F----
+names(auto_noheader) <- c("make", "price", "mpg", "rep78", "headroom", "trunk", "weight", "length", "turn", "displacement", "gear_ratio", "foreign")
+
+## ----fig.width= width, fig.height= height, fig.align= align,message = FALSE, eval = T, echo = T, error=F----
+str(auto_noheader)
+
+## ---- eval = FALSE-------------------------------------------------------
+## data(mtcars)
+## write_csv(mtcars, "mycars.csv")
+
+## ---- warning = FALSE----------------------------------------------------
+info_lost <- read_csv("mycars.csv")
+head(info_lost, n = 5)
+head(mtcars, n = 5)
+
+## ---- warning = FALSE----------------------------------------------------
+write_rds(mtcars, "mycars2.csv")
+rds_info_NOTlost <- read_rds("mycars2.csv")
+head(rds_info_NOTlost, n = 5) 
+
+## ---- warning = FALSE, eval = FALSE--------------------------------------
+## library(feather)
+## write_feather(mtcars, "mycars3.feather")
+## feather_info_NOTlost <- read_feather("mycars3.feather")
+## head(feather_info_NOTlost, n = 5)
+
+## ----fig.width= width, fig.height= height, fig.align= align,message = FALSE, eval = F, echo = T, error=F----
+## library(XLConnect)
+## auto_excel <- readWorksheetFromFile("path_to_file/auto_excel.xls", sheet = 1, header = FALSE)
+
+## ----fig.width= width, fig.height= height, fig.align= align,message = FALSE, eval = F, echo = T, error=F----
+## names(auto_excel) <- c("make", "price", "mpg", "rep78", "headroom", "trunk", "weight", "length", "turn", "displacement", "gear_ratio", "foreign")
+## View(auto_excel)
+
+## ----fig.width= width, fig.height= height, fig.align= align,message = FALSE, eval = F, echo = T, error=F----
+## install.packages("readxl")
+## devtools::install_github("tidyverse/readxl")
+
+## ----readxl--------------------------------------------------------------
+library(readxl)
+
+xlsx_example <- readxl_example("datasets.xlsx")
+read_excel(xlsx_example)
+
+## ----readxl-sheets, dependson = "readxl"---------------------------------
+excel_sheets(xlsx_example)
+
+## ----readxl-select-sheet, dependson = "readxl"---------------------------
+read_excel(xlsx_example, sheet = "chickwts")
+read_excel(xlsx_example, sheet = 2)
+
+## ----haven---------------------------------------------------------------
+library(haven)
+
+# SAS
+read_sas(system.file("examples", "iris.sas7bdat", package = "haven"))
+write_sas(mtcars, "data/mtcars.sas7bdat")
+
+# SPSS
+read_sav(system.file("examples", "iris.sav", package = "haven"))
+write_sav(mtcars, "data/mtcars.sav")
+
+# Stata
+read_dta(system.file("examples", "iris.dta", package = "haven"))
+write_dta(mtcars, "data/mtcars.dta")
+
+## ----fig.width= width, fig.height= height, fig.align= align,message = FALSE, eval = T, echo = T, error=F----
+library(readstata13)
+auto_stata_1 <- read.dta13("auto.dta")
+str(auto_stata_1)
+
+## ---- echo = FALSE, cache = FALSE----------------------------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE )
+
+## ---- cache = FALSE, message = FALSE-------------------------------------
+library(tidyverse)
+
+## ----setup, message = FALSE----------------------------------------------
+library(nycflights13)
+library(tidyverse)
+
+## ------------------------------------------------------------------------
+flights
+
+## ------------------------------------------------------------------------
+filter(flights, month == 1, day == 1)
+
+## ------------------------------------------------------------------------
+jan1 <- filter(flights, month == 1, day == 1)
+
+## ------------------------------------------------------------------------
+(dec25 <- filter(flights, month == 12, day == 25))
+
+## ----save----------------------------------------------------------------
+filter(flights, month == 12, day == 25)  ## printed, but not saved
+dec25 <- filter(flights, month == 12, day == 25)  ## saved, but not printed
+(dec25 <- filter(flights, month == 12, day == 25))  ## saved and printed
+
+## ---- error = TRUE-------------------------------------------------------
+filter(flights, month = 1)
+
+## ----bool-ops, echo = FALSE, fig.cap = "Complete set of boolean operations. `x` is the left-hand circle, `y` is the right-hand circle, and the shaded region show which parts each operator selects."----
+knitr::include_graphics("diagrams/transform-logical.png")
+
+## ---- eval = FALSE-------------------------------------------------------
+## filter(flights, month == 11 | month == 12)
+
+## ---- eval = FALSE-------------------------------------------------------
+## nov_dec <- filter(flights, month %in% c(11, 12))
+
+## ---- eval = FALSE-------------------------------------------------------
+## filter(flights, !(arr_delay > 120 | dep_delay > 120))
+## filter(flights, arr_delay <= 120, dep_delay <= 120)
+
+## ------------------------------------------------------------------------
+NA > 5
+10 == NA
+NA + 10
+NA / 2
+
+## ------------------------------------------------------------------------
+NA == NA
+
+## ------------------------------------------------------------------------
+# Let x be Mary's age. We don't know how old she is.
+x <- NA
+
+# Let y be John's age. We don't know how old he is.
+y <- NA
+
+# Are John and Mary the same age?
+x == y
+# We don't know!
+
+## ------------------------------------------------------------------------
+is.na(x)
+
+## ------------------------------------------------------------------------
+df <- tibble(x = c(1, NA, 3))
+filter(df, x > 1)
+filter(df, is.na(x) | x > 1)
+
+## ------------------------------------------------------------------------
+arrange(flights, year, month, day)
+
+## ------------------------------------------------------------------------
+arrange(flights, desc(dep_delay))
+
+## ------------------------------------------------------------------------
+df <- tibble(x = c(5, 2, NA))
+arrange(df, x)
+arrange(df, desc(x))
+
+## ------------------------------------------------------------------------
+# Select columns by name
+select(flights, year, month, day)
+# Select all columns between year and day (inclusive)
+select(flights, year:day)
+# Select all columns except those from year to day (inclusive)
+select(flights, -(year:day))
+
+## ------------------------------------------------------------------------
+rename(flights, tail_num = tailnum)
+
+## ------------------------------------------------------------------------
+select(flights, time_hour, air_time, everything())
+
+## ------------------------------------------------------------------------
+flights_sml <- select(flights, 
+  year:day, 
+  ends_with("delay"), 
+  distance, 
+  air_time
+)
+mutate(flights_sml,
+  gain = dep_delay - arr_delay,
+  speed = distance / air_time * 60
+)
+
+## ------------------------------------------------------------------------
+mutate(flights_sml,
+  gain = dep_delay - arr_delay,
+  hours = air_time / 60,
+  gain_per_hour = gain / hours
+)
+
+## ------------------------------------------------------------------------
+transmute(flights,
+  gain = dep_delay - arr_delay,
+  hours = air_time / 60,
+  gain_per_hour = gain / hours
+)
+
+## ------------------------------------------------------------------------
+transmute(flights,
+  dep_time,
+  hour = dep_time %/% 100,
+  minute = dep_time %% 100
+)
+
+## ------------------------------------------------------------------------
+(x <- 1:10)
+lag(x)
+lead(x)
+
+## ------------------------------------------------------------------------
+x
+cumsum(x)
+cummean(x)
+
+## ------------------------------------------------------------------------
+y <- c(1, 2, 2, NA, 3, 4)
+min_rank(y)
+min_rank(desc(y))
+
+## ------------------------------------------------------------------------
+row_number(y)
+dense_rank(y)
+percent_rank(y)
+cume_dist(y)
+
+## ------------------------------------------------------------------------
+summarise(flights, delay = mean(dep_delay, na.rm = TRUE))
+
+## ------------------------------------------------------------------------
+by_day <- group_by(flights, year, month, day)
+summarise(by_day, delay = mean(dep_delay, na.rm = TRUE))
+
+## ---- echo = FALSE, cache = FALSE----------------------------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE )
+
+## ----include=FALSE, cache=FALSE------------------------------------------
+set.seed(1014)
+options(digits =a 3)
+
+knitr::opts_chunk$set(
+  comment = "#>",
+  collapse = TRUE,
+  cache = TRUE,
+  out.width = "70%",
+  fig.align = 'center',
+  fig.width = 6,
+  fig.asp = 0.618,  # 1 / phi
+  fig.show = "hold"
+)
+
+options(dplyr.print_min = 6, dplyr.print_max = 6)
+
+## ----setup, message = FALSE----------------------------------------------
+library(magrittr)
+
+## ----data, message = FALSE-----------------------------------------------
+library(tidyverse)
+library(magrittr)
+diamonds
+
+## ----intermediate--------------------------------------------------------
+diamonds_1 <- filter(diamonds, color == "I")
+diamonds_2 <- group_by(diamonds_1, cut)
+(diamonds_3 <- summarize(diamonds_2, price = mean(price)))
+
+## ----intermediate-bad, error = TRUE--------------------------------------
+diamonds_1 <- filter(diamonds, color == "I")
+diamonds_2 <- group_by(diamonds_1, cut)
+(diamonds_3 <- summarize(diamonds_1, price = mean(price)))
+
+## ----overwrite-----------------------------------------------------------
+# copy diamonds to diamonds_t just for demonstration purposes
+diamonds_t <- diamonds
+
+diamonds_t <- filter(diamonds_t, color == "I")
+diamonds_t <- group_by(diamonds_t, cut)
+(diamonds_t <- summarize(diamonds_t, price = mean(price)))
+
+## ----function-comp-------------------------------------------------------
+summarize(
+  group_by(
+    filter(diamonds, color == "I"),
+    cut
+  ),
+  price = mean(price)
+)
+
+## ----function-comp-single------------------------------------------------
+summarize(group_by(filter(diamonds, color == "I"), cut), price = mean(price))
+
+## ----pipe----------------------------------------------------------------
+diamonds %>%
+  filter(color == "I") %>%
+  group_by(cut) %>%
+  summarize(price = mean(price))
+
+## ------------------------------------------------------------------------
+rnorm(100) %>%
+  matrix(ncol = 2) %>%
+  plot() %>%
+  str()
+
+rnorm(100) %>%
+  matrix(ncol = 2) %T>%
+  plot() %>%
+  str()
+
+## ------------------------------------------------------------------------
+mtcars %$%
+  cor(disp, mpg)
+
+## ---- eval = FALSE-------------------------------------------------------
+## mtcars <- mtcars %>%
+##   transform(cyl = cyl * 2)
+
+## ---- eval = FALSE-------------------------------------------------------
+## mtcars %<>% transform(cyl = cyl * 2)
+
+## ----echo = FALSE, out.width = "75%"-------------------------------------
+knitr::include_graphics("diagrams/data-science-model.png")
+## ---- echo = FALSE, cache = FALSE----------------------------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4)
+
+## ----message = FALSE,  error=FALSE, echo = FALSE-------------------------
+width  <- 6
+height <- 4
+align  <- "center"
+
+## ---- message = FALSE, warning = FALSE, cache = FALSE, echo = FALSE------
+library(tidyverse)
+library(modelr)
+library(broom)
+
+set.seed(1234)
+
+theme_set(theme_minimal())
+
+## ----setup, message = FALSE----------------------------------------------
+library(tidyverse)
+library(modelr)
+
+## ----sim-plot------------------------------------------------------------
+ggplot(sim1, aes(x, y)) + 
+  geom_point()
+
+## ----sim-random-fit,  message = F, warning = F, error= F, eval = T, echo = F----
+models <- tibble(
+  a1 = runif(250, -20, 40),
+  a2 = runif(250, -5, 5)
+)
+
+ggplot(sim1, aes(x, y)) + 
+  geom_abline(aes(intercept = a1, slope = a2), data = models, alpha = 1/4) +
+  geom_point()
+
+## ----sim-error, message = F, warning = F, error= F, eval = T, echo = F----
+dist1 <- sim1 %>% 
+  mutate(
+    dodge = rep(c(-1, 0, 1) / 20, 10),
+    x1 = x + dodge,
+    pred = 7 + x1 * 1.5
+  )
+
+ggplot(dist1, aes(x1, y)) + 
+  geom_abline(intercept = 7, slope = 1.5, color = "grey40") +
+  geom_point(color = "grey40") +
+  geom_linerange(aes(ymin = y, ymax = pred), color = "#3366FF")
+
+## ----lm-line, message = F, warning = F, error= F, eval = T, echo = T-----
+ggplot(sim1, aes(x, y)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+## ----sim-lm--------------------------------------------------------------
+sim1_mod <- lm(y ~ x, data = sim1)
+
+## ----sim-lm-summary------------------------------------------------------
+summary(sim1_mod)
+
+## ----sim-lm-plot, message = F, warning = F, error= F, eval = T, echo = F----
+dist2 <- sim1 %>%
+  add_predictions(sim1_mod) %>%
+  mutate(
+    dodge = rep(c(-1, 0, 1) / 20, 10),
+    x1 = x + dodge
+  )
+
+ggplot(dist2, aes(x1, y)) + 
+  geom_smooth(method = "lm", color = "grey40") +
+  geom_point(color = "grey40") +
+  geom_linerange(aes(ymin = y, ymax = pred), color = "#3366FF")
+
+## ------------------------------------------------------------------------
+grid <- sim1 %>% 
+  data_grid(x) 
+grid
+
+## ------------------------------------------------------------------------
+grid <- grid %>% 
+  add_predictions(sim1_mod) 
+grid
+
+## ------------------------------------------------------------------------
+ggplot(sim1, aes(x)) +
+  geom_point(aes(y = y)) +
+  geom_line(aes(y = pred), data = grid, colour = "red", size = 1)
+
+## ----resids--------------------------------------------------------------
+sim1 <- sim1 %>% 
+  add_residuals(sim1_mod)
+sim1
+
+ggplot(sim1, aes(resid)) + 
+  geom_histogram(binwidth = 0.5)
+
+## ------------------------------------------------------------------------
+ggplot(sim1, aes(resid)) + 
+  geom_freqpoly(binwidth = 0.5)
+
+## ------------------------------------------------------------------------
+summary(sim1$resid)
+
+## ------------------------------------------------------------------------
+ggplot(sim1, aes(x, resid)) + 
+  geom_ref_line(h = 0) +
+  geom_point() 
+
+## ----packages2-----------------------------------------------------------
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(modelr)
+library(broom)
+
+## ----credit--------------------------------------------------------------
+credit <- read_csv("data/Credit.csv") %>%
+  # remove first ID column
+  select(-X1)
+names(credit) <- stringr::str_to_lower(names(credit))   # convert column names to lowercase
+str(credit)
+
+## ----credit-hist---------------------------------------------------------
+ggplot(credit, mapping = aes(x = balance)) +
+  geom_histogram() +
+  labs(title = "Distribution of credit card balances",
+       x = "Credit card balance",
+       y = "Frequency count of individuals")
+
+## ----lifeExp-by-country--------------------------------------------------
+credit %>% 
+  ggplot(aes(x = limit, y = balance)) +
+    geom_point()
+
+## ----credit-limit--------------------------------------------------------
+credit_limit <- lm(balance ~ limit, data = credit)
+summary(credit_limit)
+
+grid <- credit %>% 
+  data_grid(limit) 
+grid
+
+grid <- grid %>% 
+  add_predictions(credit_limit) 
+grid
+
+ggplot(credit, aes(x = limit)) +
+  geom_point(aes(y = balance)) +
+  geom_line(aes(y = pred), data = grid, color = "red", size = 1)
+
+## ----credit-str----------------------------------------------------------
+str(credit_limit)
+
+## ----tidy----------------------------------------------------------------
+library(broom)
+
+tidy(credit_limit)
+tidy(credit_limit) %>%
+  str()
+
+## ----augment-------------------------------------------------------------
+augment(credit_limit) %>%
+  tbl_df()
+
+## ----glance--------------------------------------------------------------
+glance(credit_limit)
+
+## ----limit-pred----------------------------------------------------------
+# create data frame with new values
+(pred_data <- data_frame(limit = c(2000, 5000, 10000)))
+
+# use augment to generate predictions
+(pred_aug <- augment(credit_limit, newdata = pred_data))
+
+# Calculate 95% confidence intervals
+(pred_ci <- mutate(pred_aug,
+                   ymin = .fitted - .se.fit * 1.96,
+                   ymax = .fitted + .se.fit * 1.96))
+
+# do it in one piped operation
+(pred_ci <- augment(credit_limit, newdata = data_frame(limit = c(2000, 5000, 10000))) %>%
+  mutate(ymin = .fitted - .se.fit * 1.96,
+         ymax = .fitted + .se.fit * 1.96))
+
+## ----limit-income--------------------------------------------------------
+credit_limit_income <- lm(balance ~ limit + income, data = credit)
+tidy(credit_limit_income)
+
+## ----qual----------------------------------------------------------------
+select(credit, gender, student, married, ethnicity)
+
+## ----gender--------------------------------------------------------------
+gender <- lm(balance ~ gender, data = credit)
+tidy(gender)
+
+## ----factor--------------------------------------------------------------
+credit %>%
+  mutate(gender = factor(gender, levels = c("Male", "Female"))) %>%
+  lm(balance ~ gender, data = .) %>%
+  tidy()
+
+## ----gender-01-----------------------------------------------------------
+credit %>%
+  mutate(female = ifelse(gender == "Female", 1, 0)) %>%
+  lm(balance ~ female, data = .) %>%
+  tidy()
+
+## ----female--------------------------------------------------------------
+credit %>%
+  select(gender) %>%
+  mutate(gender_f = factor(gender, levels = c("Male", "Female")),
+         female = ifelse(gender == "Female", 1, 0),
+         female_f = factor(female, levels = 0:1, labels = c("Male", "Female")))
+
+## ----ethnicity-----------------------------------------------------------
+ethnicity <- lm(balance ~ ethnicity, data = credit)
+tidy(ethnicity)
+
+## ----inc-age-------------------------------------------------------------
+income_age <- lm(balance ~ income + age, data = credit)
+tidy(income_age)
+
+## ----inc-age-plot--------------------------------------------------------
+credit %>%
+  data_grid(income, age) %>%
+  add_predictions(income_age) %>%
+  ggplot(aes(income, pred, group = age)) +
+  geom_line(alpha = .5)
+
+## ----inc-age-x-----------------------------------------------------------
+inc_age_x <- lm(balance ~ income * age, data = credit)
+tidy(inc_age_x)
+
+## ----inc-age-x-plot------------------------------------------------------
+credit %>%
+  data_grid(income, age) %>%
+  add_predictions(inc_age_x) %>%
+  ggplot(aes(income, pred, group = age)) +
+  geom_line(alpha = .5)
+
+## ----inc-student---------------------------------------------------------
+inc_student <- lm(balance ~ income + student, data = credit)
+tidy(inc_student)
+
+credit %>%
+  data_grid(income, student) %>%
+  add_predictions(inc_student) %>%
+  ggplot(aes(income, pred, color = student)) +
+  geom_line()
+
+## ----inc-student-x-------------------------------------------------------
+inc_student_x <- lm(balance ~ income * student, data = credit)
+tidy(inc_student_x)
+
+credit %>%
+  data_grid(income, student) %>%
+  add_predictions(inc_student_x) %>%
+  ggplot(aes(income, pred, color = student)) +
+  geom_line()
+
+## ----auto----------------------------------------------------------------
+auto <- read_csv("data/Auto.csv",
+                 # make sure horsepower is parsed as numeric
+                 col_types = cols(horsepower = col_number())) %>%
+  # remove missing data
+  na.omit(horsepower)
+
+# estimate linear model of horsepower and mpg
+horse <- lm(mpg ~ horsepower, data = auto)
+tidy(horse)
+
+# generate predicted values
+horse_pred <- auto %>%
+  add_predictions(horse)
+
+# draw the graph
+ggplot(horse_pred, aes(horsepower)) +
+  geom_point(aes(y = mpg), alpha = .5) +
+  geom_line(aes(y = pred), color = "orange", size = 1)
+
+## ----auto2---------------------------------------------------------------
+# estimate polynomial squared model of horsepower and mpg
+horse2 <- lm(mpg ~ horsepower + I(horsepower^2), data = auto)
+tidy(horse2)
+
+# generate predicted values
+horse2_pred <- auto %>%
+  add_predictions(horse2)
+
+# draw the graph
+ggplot(horse2_pred, aes(horsepower)) +
+  geom_point(aes(y = mpg), alpha = .5) +
+  geom_line(data = horse_pred, aes(y = pred), color = "orange", size = 1) +
+  geom_line(aes(y = pred), color = "blue", size = 1)
+
+## ----auto5---------------------------------------------------------------
+# estimate polynomial fifth-order model of horsepower and mpg
+# use the poly() function to generate the powers
+horse5 <- lm(mpg ~ horsepower + poly(horsepower, degrees = 5), data = auto)
+tidy(horse5)
+
+# generate predicted values
+horse5_pred <- auto %>%
+  add_predictions(horse5)
+
+# draw the graph
+ggplot(horse5_pred, aes(horsepower)) +
+  geom_point(aes(y = mpg), alpha = .5) +
+  geom_line(data = horse_pred, aes(y = pred), color = "orange", size = 1) +
+  geom_line(data = horse2_pred, aes(y = pred), color = "blue", size = 1) +
+  geom_line(aes(y = pred), color = "green", size = 1)
+
+## ----auto-fit------------------------------------------------------------
+# combine models into a list and use a map() function to apply
+# glance() to each model and store the result in a tidy data frame
+list("degree_1" = horse,
+     "degree_2" = horse2,
+     "degree_5" = horse5) %>%
+  map_df(glance, .id = "id")
+
+## ---- echo = FALSE, cache = FALSE----------------------------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4)
+
+## ---- message = FALSE, warning = FALSE, cache = FALSE--------------------
+library(tidyverse)
+library(modelr)
+library(broom)
+library(forcats)
+
+set.seed(1234)
+
+theme_set(theme_minimal())
+
+## ----figurename0, echo=FALSE, out.width='100%', fig.align='left'---------
+knitr::include_graphics("titanic_port.jpg", dp=1080)
+
+## ----figurename2, echo=FALSE, out.width='80%', fig.align='center'--------
+knitr::include_graphics("titanic_route2.jpg", dp=1080)
+
+## ----figurename1, echo=FALSE, out.width = '85%', fig.align='center'------
+knitr::include_graphics("titanic_image.png", dp=720)
+
+## ----titanic_data, message = FALSE---------------------------------------
+library(titanic)
+library(magrittr)
+library(tibble)
+titanic_train <- titanic_train %>%
+  as_tibble() %>%
+  # remove missing values
+  na.omit()
+
+titanic_train %>%
+  head() %>%
+  knitr::kable()
+
+## ----titanic_ols---------------------------------------------------------
+ggplot(titanic_train, aes(Age, Survived)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Age",
+       y = "Survived")
+
+## ----titanic_ols_old-----------------------------------------------------
+ggplot(titanic_train, aes(Age, Survived)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, fullrange = TRUE) +
+  xlim(0, 200) +
+  labs(x = "Age",
+       y = "Survived")
+
+## ----linear-demo, echo=FALSE---------------------------------------------
+# simulate fake binary data
+sim_logit <- data_frame(x = runif(1000, -5, 5),
+                        y = 0 + 1 * x)
+
+# graph it
+ggplot(sim_logit, aes(x, y)) +
+  geom_line() +
+  labs(title = "The linear function",
+       x = "X",
+       y = "Prob(X)")
+
+## ----logit, echo=FALSE---------------------------------------------------
+logit2prob <- function(x){
+  exp(x) / (1 + exp(x))
+}
+
+## ----logit-demo, echo=FALSE----------------------------------------------
+library(dplyr)
+sim_logit <- sim_logit %>%
+  mutate(prob = logit2prob(y))
+
+# graph it
+ggplot(sim_logit, aes(x, prob)) +
+  geom_line() +
+  labs(title = "The logistic function",
+       x = "X",
+       y = "Prob(X)")
+
+## ----titanic_age_glm-----------------------------------------------------
+survive_age <- glm(Survived ~ Age, data = titanic_train, family = binomial)
+summary(survive_age)
+
+## ------------------------------------------------------------------------
+ggplot(titanic_train, aes(x = Age, y = Survived)) +
+  geom_point() +
+   geom_smooth(method = "glm",
+               method.args = list(family = "binomial"),
+               se = FALSE, 
+               color = "blue", size = 1) +
+  labs(x = "Age",
+       y = "Probability of surviving the Titanic")
+
+## ----titanic_age_glm_plot_wide-------------------------------------------
+ggplot(titanic_train, aes(Age, Survived)) +
+  geom_point() +
+  # use geom_smooth for out-of-sample range plotting
+  geom_smooth(method = "glm", method.args = list(family = "binomial"),
+              se = FALSE, fullrange = TRUE, color = "blue", size = 1) +
+  xlim(0,200) +
+  labs(x = "Age",
+       y = "Probability of surviving the Titanic")
+
+## ----prob-30, include = FALSE--------------------------------------------
+prob30 <- predict(survive_age, newdata = data_frame(Age = 30), type = "response")
+
+## ----make_age_pred-------------------------------------------------------
+titanic_age <- titanic_train %>%
+  data_grid(Age)
+titanic_age
+
+## ----extract_modelr, dependson="make_age_pred"---------------------------
+library(modelr)
+titanic_age <- augment(survive_age, type.predict = "response")
+titanic_age
+
+## ----plot_pred, dependson="make_age_pred"--------------------------------
+ggplot(titanic_age, aes(Age, .fitted)) +
+  geom_line() +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(title = "Relationship between age and surviving the Titanic",
+        y    = "Predicted probability of survival")
+
+## ----survive_age_woman---------------------------------------------------
+survive_age_woman <- glm(Survived ~ Age + Sex, data = titanic_train,
+                         family = binomial)
+summary(survive_age_woman)
+
+## ------------------------------------------------------------------------
+titanic_age_sex <- augment(survive_age_woman,
+                           newdata = data_grid(titanic_train, Age, Sex),
+                           type.predict = "response")
+titanic_age_sex
+
+## ------------------------------------------------------------------------
+ggplot(titanic_age_sex, aes(Age, .fitted, color = Sex)) + 
+  geom_line() +
+  labs(title = "Probability of Surviving the Titanic",
+       y     = "Predicted Probability of Survival",
+       color = "Sex")
+
+## ------------------------------------------------------------------------
+survive_age_square <- glm(Survived ~ Age + I(Age^2), data = titanic_train,
+                          family = binomial)
+summary(survive_age_square)
+
+## ------------------------------------------------------------------------
+augment(survive_age_square,
+        newdata = data_grid(titanic_train, Age),
+        type.predict = "response") %>% 
+  ggplot(aes(Age, .fitted)) + 
+  geom_line() + 
+  labs(title = "Relationship Between Age and Surviving the Titanic",
+       y = "Predicted Probability of Survival")
+
+## ----age_woman_cross-----------------------------------------------------
+survive_age_woman_x <- glm(Survived ~ Age * Sex, data = titanic_train,
+                           family = binomial)
+summary(survive_age_woman_x)
+
+## ----age_woman_cross_pred, dependson="age_woman_cross"-------------------
+titanic_age_sex_x <- augment(survive_age_woman_x,
+        newdata = data_grid(titanic_train, Age, Sex),
+        type.predict = "response")
+titanic_age_sex_x
+
+## ----age_woman_plot_logodds, dependson="age_woman_cross"-----------------
+ggplot(titanic_age_sex_x, aes(Age, .fitted, color = Sex)) +
+  geom_line() +
+  labs(title = "Log-odds of surviving the Titanic",
+       x = "Age",
+       y = "Log-odds of survival",
+       color = "Sex")
+
+## ----accuracy_age, dependson="titanic_age_glm"---------------------------
+age_accuracy <- augment(survive_age, type.predict ="response") %>%
+                mutate(.pred = as.numeric(.fitted > .5))
+
+mean(age_accuracy$Survived != age_accuracy$.pred, na.rm = TRUE)
+
+## ----accuracy_age_gender_x, dependson="age_woman_cross"------------------
+x_accuracy <- augment(survive_age_woman_x, type.predict ="response") %>%
+                mutate(.pred = as.numeric(.fitted > .5))
+
+mean(x_accuracy$Survived != x_accuracy$.pred, na.rm = TRUE)
+
+## ----setup, include = FALSE----------------------------------------------
+chunk <- "```"
+inline <- function(x = "") paste0("`` `r ", x, "` ``")
+library(tidyverse)
+
+## ----echo = FALSE, comment = ""------------------------------------------
+cat(htmltools::includeText("rmarkdown/diamond-sizes.Rmd"))
+
+## ---- echo = FALSE, out.width = "75%"------------------------------------
+knitr::include_graphics("rmarkdown/diamond-sizes-notebook.png")
+
+## ---- echo = FALSE, out.width = "75%"------------------------------------
+knitr::include_graphics("rmarkdown/diamond-sizes-report.png")
+
+## ---- echo = FALSE, out.width = "75%"------------------------------------
+knitr::include_graphics("images/RMarkdownFlow.png")
+
+## ---- echo = FALSE, comment = ""-----------------------------------------
+cat(readr::read_file("rmarkdown/markdown.Rmd"))
+
+## ---- echo = FALSE, out.width = "30%"------------------------------------
+knitr::include_graphics("screenshots/rmarkdown-chunk-nav.png")
+
+## ------------------------------------------------------------------------
+mtcars[1:5, ]
+
+## ----kable---------------------------------------------------------------
+knitr::kable(
+  mtcars[1:5, ], 
+  caption = "A knitr kable."
+)
+
+## ----eval = FALSE--------------------------------------------------------
+## knitr::opts_chunk$set(
+##   echo = FALSE
+## )
+
+## ------------------------------------------------------------------------
+format(.12358124331, digits = 2, big.mark = ",")
+
+## ----eval = FALSE--------------------------------------------------------
+## rmarkdown::render("diamond-sizes.Rmd", output_format = "word_document")
+
+## ---- echo = FALSE, out.width = NULL-------------------------------------
+knitr::include_graphics("screenshots/rmarkdown-knit.png")
+
+## ---- eval = FALSE-------------------------------------------------------
+## knitr::opts_chunk$set(echo = FALSE)
+
+## ---- echo = FALSE, out.width = "75%"------------------------------------
+knitr::include_graphics("screenshots/rmarkdown-flexdashboard.png")
+
+## ----comment = "", echo = FALSE------------------------------------------
+cat(readr::read_file("rmarkdown/dashboard.Rmd"))
+
+## ---- eval = FALSE-------------------------------------------------------
+## library(shiny)
+## 
+## textInput("name", "What is your name?")
+## numericInput("age", "How old are you?", NA, min = 0, max = 150)
+
+## ---- echo = FALSE, out.width = NULL-------------------------------------
+knitr::include_graphics("screenshots/rmarkdown-shiny.png")
+
+## ----setup, message = FALSE----------------------------------------------
+library(tidyverse)
+
+## ------------------------------------------------------------------------
+ggplot(data = diamonds) +
+  geom_bar(aes(x = cut))
+
+## ------------------------------------------------------------------------
+diamonds %>% 
+  count(cut)
+
+## ------------------------------------------------------------------------
+ggplot(data = diamonds) +
+  geom_histogram(aes(x = carat), binwidth = 0.5)
+
+## ------------------------------------------------------------------------
+diamonds %>% 
+  count(cut_width(carat, 0.5))
+
+## ------------------------------------------------------------------------
+smaller <- diamonds %>% 
+  filter(carat < 3)
+  
+ggplot(data = smaller, aes(x = carat)) +
+  geom_histogram(binwidth = 0.1)
+
+## ------------------------------------------------------------------------
+ggplot(data = smaller, aes(x = carat, colour = cut, fill = cut)) +
+  geom_histogram(binwidth = 0.1)
+
+## ------------------------------------------------------------------------
+ggplot(data = smaller, aes(x = carat, colour = cut)) +
+  geom_freqpoly(binwidth = 0.1)
+
+## ------------------------------------------------------------------------
+ggplot(data = smaller, aes(x = carat)) +
+  geom_histogram(binwidth = 0.01)
+
+## ------------------------------------------------------------------------
+ggplot(data = faithful, aes(x = eruptions)) + 
+  geom_histogram(binwidth = 0.25)
+
+## ------------------------------------------------------------------------
+ggplot(diamonds) + 
+  geom_histogram(aes(x = y), binwidth = 0.5)
+
+## ------------------------------------------------------------------------
+ggplot(diamonds) + 
+  geom_histogram(aes(x = y), binwidth = 0.5) +
+  coord_cartesian(ylim = c(0, 50))
+
+## ---- include = FALSE----------------------------------------------------
+old <- options(tibble.print_max = 10, tibble.print_min = 10)
+
+## ------------------------------------------------------------------------
+unusual <- diamonds %>% 
+  filter(y < 3 | y > 20) %>% 
+  select(price, x, y, z) %>%
+  arrange(y)
+unusual
+
+## ---- include = FALSE----------------------------------------------------
+options(old)
+
+## ---- eval = FALSE-------------------------------------------------------
+## diamonds2 <- diamonds %>%
+##   filter(between(y, 3, 20))
+
+## ------------------------------------------------------------------------
+diamonds2 <- diamonds %>% 
+  mutate(y = ifelse(y < 3 | y > 20, NA, y))
+
+## ---- dev = "png"--------------------------------------------------------
+ggplot(data = diamonds2, aes(x = x, y = y)) + 
+  geom_point()
+
+## ---- eval = FALSE-------------------------------------------------------
+## ggplot(data = diamonds2, aes(x = x, y = y)) +
+##   geom_point(na.rm = TRUE)
+
+## ------------------------------------------------------------------------
+ggplot(data = diamonds, aes(x = price)) + 
+  geom_freqpoly(aes(colour = cut), binwidth = 500)
+
+## ---- fig.width = "50%", fig.width = 4-----------------------------------
+ggplot(diamonds) + 
+  geom_bar(aes(x = cut))
+
+## ------------------------------------------------------------------------
+ggplot(data = diamonds, aes(x = price, y = ..density..)) + 
+  geom_freqpoly(aes(colour = cut), binwidth = 500)
+
+## ---- echo = FALSE, out.width = "100%"-----------------------------------
+knitr::include_graphics("images/EDA-boxplot.png")
+
+## ----fig.height = 3------------------------------------------------------
+ggplot(data = diamonds, aes(x = cut, y = price)) +
+  geom_boxplot()
+
+## ------------------------------------------------------------------------
+ggplot(data = mpg, aes(x = class, y = hwy)) +
+  geom_boxplot()
+
+## ----fig.height = 3------------------------------------------------------
+ggplot(data = mpg) +
+  geom_boxplot(aes(x = reorder(class, hwy, FUN = median), y = hwy))
+
+## ------------------------------------------------------------------------
+ggplot(data = mpg) +
+  geom_boxplot(aes(x = reorder(class, hwy, FUN = median), y = hwy)) +
+  coord_flip()
+
+## ------------------------------------------------------------------------
+ggplot(data = mpg) +
+  geom_boxplot(aes(x = reorder(class, hwy, FUN = median), y = hwy), varwidth = TRUE) +
+  coord_flip()
+
+## ------------------------------------------------------------------------
+ggplot(data = diamonds) +
+  geom_count(aes(x = cut, y = color))
+
+## ------------------------------------------------------------------------
+diamonds %>% 
+  count(color, cut)
+
+## ------------------------------------------------------------------------
+diamonds %>% 
+  count(color, cut) %>%  
+  ggplot(aes(x = color, y = cut)) +
+    geom_tile(aes(fill = n))
+
+## ---- dev = "png"--------------------------------------------------------
+ggplot(data = diamonds) +
+  geom_point(aes(x = carat, y = price))
+
+## ---- dev = "png"--------------------------------------------------------
+ggplot(data = diamonds) + 
+  geom_point(aes(x = carat, y = price), alpha = 1 / 100)
+
+## ---- fig.asp = 1, out.width = "50%", fig.align = "default", message = FALSE----
+ggplot(data = smaller) +
+  geom_bin2d(aes(x = carat, y = price))
+
+# install.packages("hexbin")
+ggplot(data = smaller) +
+  geom_hex(aes(x = carat, y = price))
+
+## ---- dev = "png"--------------------------------------------------------
+library(modelr)
+
+mod <- lm(log(price) ~ log(carat), data = diamonds)
+
+diamonds2 <- diamonds %>% 
+  add_residuals(mod) %>% 
+  mutate(resid = exp(resid))
+
+ggplot(data = diamonds2) + 
+  geom_point(aes(x = carat, y = resid))
+
+## ------------------------------------------------------------------------
+ggplot(data = diamonds2) + 
+  geom_boxplot(aes(x = cut, y = resid))
+
+## ---- eval = FALSE-------------------------------------------------------
+## ggplot(data = faithful, mapping = aes(x = eruptions)) +
+##   geom_freqpoly(binwidth = 0.25)
+
+## ---- eval = FALSE-------------------------------------------------------
+## ggplot(faithful, aes(eruptions)) +
+##   geom_freqpoly(binwidth = 0.25)
+
+## ---- eval = FALSE-------------------------------------------------------
+## diamonds %>%
+##   count(cut, clarity) %>%
+##   ggplot(aes(clarity, cut, fill = n)) +
+##     geom_tile()
+## ---- message = FALSE----------------------------------------------------
+library(tidyverse)
+
+## ---- message = FALSE----------------------------------------------------
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth(se = FALSE) +
+  labs(title = "Fuel efficiency generally decreases with engine size")
+
+## ---- message = FALSE----------------------------------------------------
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "Fuel efficiency generally decreases with engine size",
+    subtitle = "Two seaters (sports cars) are an exception because of their light weight",
+    caption = "Data from fueleconomy.gov"
+  )
+
+## ---- message = FALSE----------------------------------------------------
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    x = "Engine displacement (L)",
+    y = "Highway fuel economy (mpg)",
+    colour = "Car type"
+  )
+
+## ------------------------------------------------------------------------
+best_in_class <- mpg %>%
+  group_by(class) %>%
+  filter(row_number(desc(hwy)) == 1)
+
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
+  geom_text(aes(label = model), data = best_in_class)
+
+## ------------------------------------------------------------------------
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
+  geom_label(aes(label = model), data = best_in_class, nudge_y = 2, alpha = 0.5)
+
+## ----default-scales, fig.show = "hide"-----------------------------------
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class))
+
+## ---- fig.show = "hide"--------------------------------------------------
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class)) +
+  scale_x_continuous() +
+  scale_y_continuous() +
+  scale_colour_discrete()
+
+## ------------------------------------------------------------------------
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
+  scale_y_continuous(breaks = seq(15, 40, by = 5))
+
+## ------------------------------------------------------------------------
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point() +
+  scale_x_continuous(labels = NULL) +
+  scale_y_continuous(labels = NULL)
+
+## ----fig.asp = 1, fig.align = "default", out.width = "50%", fig.width = 4----
+base <- ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(colour = class))
+
+base + theme(legend.position = "left")
+base + theme(legend.position = "top")
+base + theme(legend.position = "bottom")
+base + theme(legend.position = "right") # the default
+
+## ---- fig.align = "default", out.width = "50%"---------------------------
+ggplot(diamonds, aes(carat, price)) +
+  geom_bin2d()
+
+ggplot(diamonds, aes(log10(carat), log10(price))) +
+  geom_bin2d()
+
+## ------------------------------------------------------------------------
+ggplot(diamonds, aes(carat, price)) +
+  geom_bin2d() + 
+  scale_x_log10() + 
+  scale_y_log10()
+
+## ---- fig.align = "default", out.width = "50%"---------------------------
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = drv))
+
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = drv)) +
+  scale_colour_brewer(palette = "Set1")
+
+## ------------------------------------------------------------------------
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = drv, shape = drv)) +
+  scale_colour_brewer(palette = "Set1")
+
+## ----brewer, fig.asp = 2.5, echo = FALSE, fig.cap = "All ColourBrewer scales."----
+par(mar = c(0, 3, 0, 0))
+RColorBrewer::display.brewer.all()
+
+## ------------------------------------------------------------------------
+presidential %>%
+  mutate(id = 33 + row_number()) %>%
+  ggplot(aes(start, id, colour = party)) +
+    geom_point() +
+    geom_segment(aes(xend = end, yend = id)) +
+    scale_colour_manual(values = c(Republican = "red", Democratic = "blue"))
+
+## ----out.width = "50%", fig.align = "default", message = FALSE-----------
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth() +
+  coord_cartesian(xlim = c(5, 7), ylim = c(10, 30))
+
+mpg %>%
+  filter(displ >= 5, displ <= 7, hwy >= 10, hwy <= 30) %>%
+  ggplot(aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth()
+
+## ---- message = FALSE----------------------------------------------------
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class)) +
+  geom_smooth(se = FALSE) +
+  theme_bw()
+
+## ----themes, echo = FALSE, fig.cap = "The eight themes built-in to ggplot2."----
+knitr::include_graphics("images/visualization-themes.png")
+
+## ---- fig.show = "none"--------------------------------------------------
+ggplot(mpg, aes(displ, hwy)) + geom_point()
+ggsave("my-plot.pdf")
+
+## ---- include = FALSE----------------------------------------------------
+file.remove("my-plot.pdf")
+
+## ---- echo = FALSE-------------------------------------------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE )
+
+## ----gganimate_example---------------------------------------------------
+library(ggplot2)
+library(gganimate)
+library(gapminder)
+
+## ------------------------------------------------------------------------
+names(gapminder)
+head(gapminder)
+
+## ------------------------------------------------------------------------
+p <- ggplot(
+  gapminder,
+  aes(x = gdpPercap, y=lifeExp, size = pop, colour = country)
+) +
+  geom_point(show.legend = FALSE, alpha = 0.7) +
+  scale_color_viridis_d() +
+  scale_size(range = c(2, 12)) +
+  scale_x_log10() +
+  labs(x = "GDP per capita", y = "Life expectancy")
+p
+
+## ----gganimate_example_2-------------------------------------------------
+p + transition_time(year) +
+  labs(title = "Year: {frame_time}")
+# IF you get error messages consider installing:
+# - the `gifski` package for gif output
+# - the `av` package for video output
+# and then consider loading these packages :
+    # install.packages("gifski")
+    # install.packages("av")
+    # library(gifski)
+    # library(av)
+    # library(gapminder)
+# library(gganimate)
+
+
+## ---- eval= FALSE--------------------------------------------------------
+## transition_time(time, range = NULL)
+
+## ---- eval= FALSE--------------------------------------------------------
+## `time` : An unquoted expression giving the time, and thus state membership, of each observation.
+## `range` : The time range to animate. If NULL it will be set to the range of time
+
+## ------------------------------------------------------------------------
+p + facet_wrap(~continent) +
+  transition_time(year) +
+  labs(title = "Year: {frame_time}")
+
+## ------------------------------------------------------------------------
+data(mtcars)
+anim <- ggplot(mtcars, aes(x = disp, y = mpg)) +
+   geom_point(aes(colour = factor(cyl)), size = 2) +
+    transition_states(cyl,
+                      transition_length = 2,
+                      state_length = 1)
+anim +
+  enter_fade() +
+  exit_shrink()
+
+## ---- 01-introduction, echo = FALSE, cache = FALSE-----------------------
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE, interval = .4,fig.margin = FALSE )
+
+## ------------------------------------------------------------------------
+# IF code does not work re-install and restart R.
+library(magrittr)
+library(ggvis)
+library(shiny)
+library(tidyverse)
+library(MASS)
+p <- ggvis(mtcars, x = ~wt, y = ~mpg)
+
+## ------------------------------------------------------------------------
+layer_points(p)
+
+## ------------------------------------------------------------------------
+ layer_points(ggvis(mtcars, x = ~wt, y = ~mpg)) 
+
+## ------------------------------------------------------------------------
+mtcars %>%
+  ggvis(x = ~wt, y = ~mpg) %>%
+  layer_points()
+
+## ------------------------------------------------------------------------
+library(dplyr)
+mtcars %>%
+  ggvis(x = ~mpg, y = ~disp) %>%
+  mutate(disp = disp / 61.0237) %>% # convert engine displacment to litres
+  layer_points()
+
+## ------------------------------------------------------------------------
+mtcars %>%
+  ggvis(~mpg, ~disp) %>%
+  layer_points()
+
+## ------------------------------------------------------------------------
+mtcars %>% ggvis(~mpg, ~disp, fill = ~factor(cyl)) %>% layer_points()
+mtcars %>% ggvis(~mpg, ~disp, size = ~wt) %>% layer_points()
+mtcars %>% ggvis(~mpg, ~disp, shape = ~factor(cyl)) %>% layer_points()
+
+## ------------------------------------------------------------------------
+mtcars %>% ggvis(~wt, ~mpg, fill := "red", stroke := "black") %>% layer_points()
+mtcars %>% ggvis(~wt, ~mpg, size := 300, opacity := 0.4) %>% layer_points()
+mtcars %>% ggvis(~wt, ~mpg, shape := "cross") %>% layer_points()
+
+## ---- cache = FALSE------------------------------------------------------
+mtcars %>%
+  ggvis(~wt, ~mpg,
+    size := input_slider(10, 100),
+    opacity := input_slider(0, 1)
+  ) %>%
+  layer_points()
+
+## ---- cache = FALSE------------------------------------------------------
+mtcars %>%
+  ggvis(~wt) %>%
+  layer_histograms(width =  input_slider(0, 2, step = 0.10, label = "width"),
+                   center = input_slider(0, 2, step = 0.05, label = "center"))
+
+## ---- cache = FALSE------------------------------------------------------
+keys_s <- left_right(10, 1000, step = 50)
+mtcars %>% ggvis(~wt, ~mpg, size := keys_s, opacity := 0.5) %>% layer_points()
+#> Warning: Can't output dynamic/interactive ggvis plots in a knitr document.
+#> Generating a static (non-dynamic, non-interactive) version of the plot.
+
+## ---- cache = FALSE------------------------------------------------------
+mtcars %>% ggvis(~wt, ~mpg) %>%
+  layer_points() %>%
+  add_tooltip(function(df) df$wt)
+
+## ------------------------------------------------------------------------
+mtcars %>% ggvis(~wt, ~mpg) %>% layer_points()
+
+
+## ------------------------------------------------------------------------
+df <- data.frame(x = 1:10, y = runif(10))
+df %>% ggvis(~x, ~y) %>% layer_paths()
+
+
+## ------------------------------------------------------------------------
+t <- seq(0, 2 * pi, length = 100)
+df <- data.frame(x = sin(t), y = cos(t))
+df %>% ggvis(~x, ~y) %>% layer_paths(fill := "red")
+
+## ------------------------------------------------------------------------
+df <- data.frame(x = 1:10, y = runif(10))
+df %>% ggvis(~x, ~y) %>% layer_ribbons()
+df %>% ggvis(~x, ~y + 0.1, y2 = ~y - 0.1) %>% layer_ribbons()
+
+## ------------------------------------------------------------------------
+set.seed(1014)
+df <- data.frame(x1 = runif(5), x2 = runif(5), y1 = runif(5), y2 = runif(5))
+df %>% ggvis(~x1, ~y1, x2 = ~x2, y2 = ~y2, fillOpacity := 0.1) %>% layer_rects()
+
+## ------------------------------------------------------------------------
+df <- data.frame(x = 3:1, y = c(1, 3, 2), label = c("a", "b", "c"))
+df %>% ggvis(~x, ~y, text := ~label) %>% layer_text()
+ df %>% ggvis(~x, ~y, text := ~label) %>% layer_text(fontSize := 50)
+ df %>% ggvis(~x, ~y, text := ~label) %>% layer_text(angle := 45)
+
+## ------------------------------------------------------------------------
+t <- seq(0, 2 * pi, length = 20)
+df <- data.frame(x = sin(t), y = cos(t))
+df %>% ggvis(~x, ~y) %>% layer_paths()
+df %>% ggvis(~x, ~y) %>% layer_lines()
+
+## ------------------------------------------------------------------------
+df %>% ggvis(~x, ~y) %>% arrange(x) %>% layer_paths()
+
+## ------------------------------------------------------------------------
+mtcars %>% ggvis(~mpg) %>% layer_histograms()
+
+## ------------------------------------------------------------------------
+binned <- mtcars %>% compute_bin(~mpg)
+binned %>%
+  ggvis(x = ~xmin_, x2 = ~xmax_, y2 = 0, y = ~count_, fill := "black") %>%
+  layer_rects()
+
+## ------------------------------------------------------------------------
+mtcars %>% ggvis(~wt, ~mpg) %>% layer_smooths()
+
+## ------------------------------------------------------------------------
+smoothed <- mtcars %>% compute_smooth(mpg ~ wt)
+smoothed %>% ggvis(~pred_, ~resp_) %>% layer_paths()
+
+## ---- cache= FALSE-------------------------------------------------------
+span <- input_slider(0.2, 1, value = 0.75)
+mtcars %>% ggvis(~wt, ~mpg) %>% layer_smooths(span = span)
+
+## ------------------------------------------------------------------------
+mtcars %>%
+  ggvis(~wt, ~mpg) %>%
+  layer_smooths() %>%
+  layer_points()
+
+## ------------------------------------------------------------------------
+mtcars %>% ggvis(~wt, ~mpg) %>%
+  layer_smooths(span = 1) %>%
+  layer_smooths(span = 0.3, stroke := "red")
+
+## ---- cache= FALSE-------------------------------------------------------
+mtcars %>% ggvis(~wt, ~mpg) %>%
+  layer_smooths( span =  input_slider(0.2, 1, value = 1)) %>%
+  layer_smooths(span = input_slider(0.2, 1, value = 0.3), stroke := "red")
+
+## ----setup, include=FALSE------------------------------------------------
+knitr::opts_chunk$set(echo = TRUE)
+
+## ----message = FALSE, eval = T, echo = T---------------------------------
+library(plotly)
+cars_static <- ggplot(mpg, aes(x = displ, y = hwy) ) + 
+  geom_point()
+ggplotly(cars_static)
+
+## ----message = FALSE, eval = T, echo = F, error=F------------------------
+data("diamonds")
+p <- ggplot(diamonds, aes(x = log(carat), y = log(price))) + 
+  geom_hex(bins = 100)
+ggplotly(p)
+
+## ----message = FALSE, eval = T, echo = T, error=F------------------------
+p <- ggplot(diamonds, aes(x = log(price), color = clarity)) + 
+    geom_freqpoly()
+ggplotly(p)
+
+## ----message = FALSE, eval = T, echo = T, error=F------------------------
+p <- ggplot(diamonds, aes(x = log(price), color = clarity)) + 
+    geom_freqpoly(stat = "density") + 
+    facet_wrap(~cut)
+ggplotly(p)
+
+## ---- message = FALSE, eval = T, echo = T, error=F-----------------------
+# load the plotly R package
+library(plotly)
+
+# load the diamonds dataset from the ggplot2 package
+data(diamonds, package = "ggplot2")
+head(diamonds, n = 5)
+
+## ----message = FALSE, eval = T, echo = T, error=F------------------------
+# create three visualizations of the diamonds dataset
+plot_ly(diamonds, x = ~cut)
+plot_ly(diamonds, x = ~cut, y = ~clarity)
+plot_ly(diamonds, x = ~cut, color = ~clarity, colors = "Accent")
+
+## ---- message = FALSE, eval = T, echo = T, error = F---------------------
+# doesn't produce black bars
+plot_ly(diamonds, x = ~cut, color = "black")
+# produces red bars with black outline
+plot_ly(diamonds, x = ~cut, color = I("red"), stroke = I("black"), span = I(2))
+
+## ----message = FALSE, eval = T, echo = T, error=F------------------------
+diamonds %>%
+  plot_ly(x = ~cut) %>%
+  layout(title = "My beautiful histogram")
+
+## ----message = FALSE, eval = T, echo = T, error=F------------------------
+diamonds %>%
+  plot_ly() %>% 
+  add_histogram(x = ~cut)
+
+## ----message = FALSE, eval = T, echo = T, error=F------------------------
+diamonds %>%
+  dplyr::count(cut) %>%
+  plot_ly() %>% 
+  add_bars(x = ~cut, y = ~n)
+
+## ---- message = FALSE, eval = T, echo = T--------------------------------
+diamonds %>%
+  dplyr::count(cut, clarity) %>%
+	  plot_ly(x = ~cut, y = ~n, color = ~clarity) %>%
+  	add_bars()
+
+## ---- message = FALSE, eval = T, echo = T--------------------------------
+diamonds %>%
+  dplyr::count(cut, clarity) %>%
+	  plot_ly(x = ~cut, y = ~n, color = ~clarity) %>%
+  	add_bars() %>%
+  	layout(barmode = "stack")
+	
+
+## ---- message = FALSE, eval = T, echo = T--------------------------------
+library(plotly)
+diamonds %>%
+  plot_ly() %>% 
+  add_histogram(x = ~cut)
+
+## ---- message = FALSE, eval = T, echo = T--------------------------------
+library(plotly)
+diamonds %>%
+  plot_ly() %>% 
+   add_histogram(x = ~cut, color = I("red"), opacity = 0.5)
+
+## ---- message = FALSE, eval = T, echo = T--------------------------------
+library(plotly)
+diamonds %>%
+  plot_ly(x = ~carat, y = ~price) %>% 
+   add_markers()
+
+## ---- message = FALSE, eval = T, echo = T--------------------------------
+library(plotly)
+diamonds %>%
+ plot_ly(x = ~carat, y = ~price) %>% 
+  add_markers(marker = list(size = 2, opacity = 0.5 ))
+
+## ---- message = FALSE, eval = T, echo = T--------------------------------
+library(plotly)
+diamonds %>%
+ plot_ly(x = ~carat, y = ~price, color = ~cut) %>% 
+  add_markers(colors = "Dark2")
+
+## ---- message = FALSE, eval = T, echo = T--------------------------------
+diamonds %>%
+ plot_ly(x = ~carat, y = ~price, color = ~cut, hoverinfo = "y") %>% 
+  add_markers(colors = "Dark2")
+
+## ---- message = FALSE, eval = T, echo = T--------------------------------
+diamonds %>%
+ plot_ly(x = ~cut, y = ~price, color = ~cut, opacity = 0.5, hoverinfo = "price") %>% 
+  add_boxplot()
+
+## ---- message = FALSE, eval = T, echo = T--------------------------------
+diamonds %>%
+ plot_ly(x = ~carat, y = ~price, color = ~cut, opacity = 0.5, 
+         hoverinfo = "text",
+         text = ~paste("Carat:", carat, "<br>",                             
+                       "Price:", price, "<br>", 
+                       "Cut:", cut)) %>% 
+            add_markers()
+
+## ---- message = FALSE, eval = T, echo = T--------------------------------
+lmfit <- lm(price ~ carat, data = diamonds)
+diamonds %>%
+ plot_ly(x = ~carat, y = ~price) %>% 
+ add_markers(showlegend = FALSE) %>% 
+ add_lines(y = ~fitted(lmfit))
+
+## ---- message = FALSE, eval = T, echo = T--------------------------------
+loessfit <- loess(price ~ carat, data = diamonds, span = 0.5)
+diamonds %>%
+ plot_ly(x = ~carat, y = ~price) %>% 
+ add_markers(showlegend = FALSE) %>% 
+ add_lines(y = ~fitted(loessfit))
+
+## ----message = FALSE, eval = T, echo = T, error=F------------------------
+d.ideal    <- density(diamonds$price[which(diamonds$cut == "Ideal") ], na.rm = TRUE)
+d.premium  <- density(diamonds$price[which(diamonds$cut == "Premium") ], na.rm = TRUE)
+d.verygood <- density(diamonds$price[which(diamonds$cut == "Very Good") ], na.rm = TRUE)
+d.good     <- density(diamonds$price[which(diamonds$cut == "Good") ], na.rm = TRUE)
+d.fair     <- density(diamonds$price[which(diamonds$cut == "Fair") ], na.rm = TRUE)
+
+## ----message = FALSE, eval = T, echo = T, error=F------------------------
+(density(diamonds$price[which(diamonds$cut == "Ideal") ], na.rm = TRUE))
+
+## ----message = FALSE, eval = T, echo = T, error=F------------------------
+diamonds %>% plot_ly() %>% 
+            add_lines(x = ~d.ideal$x,    y = ~d.ideal$y,    name = "Ideal",     color = 'red') %>% 
+            add_lines(x = ~d.premium$x,  y = ~d.premium$y,  name = "Premium",   color = 'blue') %>%
+            add_lines(x = ~d.verygood$x, y = ~d.verygood$y, name = "Very Good", color = 'green') %>%
+            add_lines(x = ~d.good$x,     y = ~d.good$y,     name = "Good",      color = 'violet') %>%
+            add_lines(x = ~d.fair$x,     y = ~d.fair$y,     name = "Fair",      color = 'orange') %>%
+layout(xaxis = list(title = 'Price'), yaxis = list(title = 'Density')) 
+
+## ---- message = FALSE, eval = T, echo = T--------------------------------
+diamonds %>%
+ plot_ly(x = ~cut, y = ~price, color = ~cut, 
+         hoverinfo = "text",
+         text = ~paste("Price:", price)) %>% 
+  add_boxplot()
+
+## ----message = FALSE, eval = T, echo = T, error=F------------------------
+library(dplyr)
+
+diamonds %>%
+  plot_ly(x = ~cut) %>% 
+  add_histogram() %>%
+  group_by(cut) %>%
+  summarise(n = n()) %>%
+  add_text(
+    text = ~scales::comma(n), y = ~n, 
+    textposition = "top middle", 
+    cliponaxis = FALSE
+  )
+
+## ----message = FALSE, eval = T, echo = T, error=F------------------------
+diamonds %>%
+  plot_ly(x = ~cut) %>% 
+  add_histogram() %>%
+  group_by(cut) %>%
+  summarise(n = n()) %>% 
+  plotly_data()
+
+## ----message = FALSE, eval = T, echo = T, error=F------------------------
+library(plotly)
+?economics
+p1 <- plot_ly(economics, x = ~date, y = ~unemploy) %>%
+  add_lines(name = ~"unemploy")
+p2 <- plot_ly(economics, x = ~date, y = ~uempmed) %>%
+  add_lines(name = ~"uempmed")
+p <- subplot(p1, p2)
+
+## ----animation-ggplotly,message = FALSE, eval = T, echo = T, error=F-----
+library(plotly)
+data(gapminder, package = "gapminder")
+gg <- ggplot(gapminder, aes(gdpPercap, lifeExp, color = continent)) +
+  geom_point(aes(size = pop, frame = year, ids = country)) +
+  scale_x_log10()
+ggplotly(gg)
+
+## ---- message = FALSE, eval = T, echo = F, error=F, warning=FALSE--------
+library(gapminder)
+base <- gapminder %>%
+  plot_ly(x = ~gdpPercap, y = ~lifeExp, size = ~pop, 
+          text = ~country, hoverinfo = "text") %>%
+  layout(xaxis = list(type = "log"))
+
+base %>%
+  add_markers(color = ~continent, frame = ~year, ids = ~country) %>%
+  animation_opts(1000, easing = "elastic", redraw = FALSE) %>%
+  animation_button(
+    x = 1, xanchor = "right", y = 0, yanchor = "bottom"
+  ) %>%
+  animation_slider(
+    currentvalue = list(prefix = "YEAR ", font = list(color="red"))
+  )
+
+## ----message = FALSE, eval = T, echo = F, error=F, warning=FALSE---------
+meanLife <- with(gapminder, tapply(lifeExp, INDEX = continent, mean))
+gapminder$continent <- factor(
+  gapminder$continent, levels = names(sort(meanLife))
+)
+
+base %>%
+  add_markers(data = gapminder, frame = ~continent) %>%
+  hide_legend() %>%
+  animation_opts(frame = 1000, transition = 0, redraw = FALSE)
+
+## ---- message = FALSE, eval = T, echo = T, error=F, warning = F----------
+library(plotly)
+p1 <- plot_ly(economics, x = ~date, y = ~unemploy) %>% 
+  add_lines(name = "unemploy")
+p2 <- plot_ly(economics, x = ~date, y = ~uempmed) %>% 
+  add_lines(name = "uempmed")
+subplot(p1, p2, nrows = 2, shareX = TRUE, titleX = FALSE)
+
+## ----message = FALSE, eval = T, echo = T, error=F------------------------
+library(plotly)
+p1 <- plot_ly(economics, x = ~date, y = ~unemploy) %>% 
+  add_lines(name = "unemploy")
+p2 <- plot_ly(economics, x = ~date, y = ~uempmed) %>% 
+  add_lines(name = "uempmed")
+p3 <- plot_ly(economics, x = ~date, y = ~psavert) %>% 
+  add_lines(name = "psavert")
+subplot(p1, p2, p3, nrows = 3, shareX = TRUE, titleX = FALSE)
+
+
+
+ 
